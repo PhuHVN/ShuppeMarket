@@ -1,4 +1,4 @@
-namespace ShuppeMarket
+namespace ShuppeMarket.API
 {
     public static class DependencyInjection
     {

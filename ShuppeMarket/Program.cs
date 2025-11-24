@@ -1,5 +1,5 @@
 using Microsoft.OpenApi.Models;
-using ShuppeMarket;
+using ShuppeMarket.API;
 
 var builder = WebApplication.CreateBuilder(args);
 
