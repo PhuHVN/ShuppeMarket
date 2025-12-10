@@ -12,7 +12,7 @@ namespace ShuppeMarket.Infrastructure
         {
             // Infrastructure service registrations go here
             services.AddLogging();
-            services.AddScoped<IUnitoOfWork, UnitOfWork>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
 
     }

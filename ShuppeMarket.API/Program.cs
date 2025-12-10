@@ -1,5 +1,11 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
 using ShuppeMarket.API;
+using ShuppeMarket.Infrastructure.DatabaseSettings;
+using System.Security.Claims;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +20,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>
 {
     option.EnableAnnotations();
-    option.SwaggerDoc("v1", new OpenApiInfo { Title = "Shuppe Market API", Version = "v1" });
+    option.SwaggerDoc("v1", new OpenApiInfo { Title = "ShuppeMarket API", Version = "v1" });
 
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -44,16 +50,102 @@ builder.Services.AddSwaggerGen(option =>
     option.SchemaGeneratorOptions.SchemaIdSelector = type => type.FullName;
 }
 );
+//Jwt Authentication
+builder.Services.AddAuthentication(options =>
+{
+   options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme,options =>
+{
+    var jwtSettings = builder.Configuration.GetSection("Jwt");
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime =  true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings["SecretKey"])),
+        NameClaimType = ClaimTypes.NameIdentifier,
+        RoleClaimType = ClaimTypes.Role
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = async context =>
+        {
+            context.HandleResponse();
+
+            if (context.Response.HasStarted)
+                return;
+
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+
+            var response = new
+            {
+                StatusCode = context.Response.StatusCode,
+                IsSuccess = false,
+                Message = "Unauthorized or missing token"
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        },
+
+        OnAuthenticationFailed = async context =>
+        {
+            if (context.Response.HasStarted)
+                return;
+
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+
+            var message = context.Exception?.GetType().Name switch
+            {
+                "SecurityTokenExpiredException" => "Token expired",
+                "SecurityTokenInvalidSignatureException" => "Invalid token signature",
+                _ => "Invalid token"
+            };
+
+            var response = new
+            {
+                StatusCode = context.Response.StatusCode,
+                IsSuccess = false,
+                Message = message
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        },
+
+        OnForbidden = async context =>
+        {
+            if (context.Response.HasStarted)
+                return;
+
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json";
+
+            var response = new
+            {
+                StatusCode = context.Response.StatusCode,
+                IsSuccess = false,
+                Message = "You do not have permission to access this resource"
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        }
+    };
+});
+
 
 
 // Add services to the container.
 builder.Services.AddControllers();
-
-
 //Add Dependency Injection
 builder.Services.AddConfig(builder.Configuration);
+
 //Entity Framework + SQL Server
-//builder.Services.AddDbContext<YourDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
