@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShuppeMarket.Infrastructure.Implemention
 {
-    public class UnitOfWork : IUnitoOfWork
+    public class UnitOfWork : IUnitOfWork
     {
         private readonly AppDbContext _context;
         private IDbContextTransaction? _transaction;

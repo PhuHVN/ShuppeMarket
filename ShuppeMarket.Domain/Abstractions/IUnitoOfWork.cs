@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ShuppeMarket.Domain.Abstractions
 {
-    public interface IUnitoOfWork : IDisposable
+    public interface IUnitOfWork : IDisposable
     {
         IGenericRepository<T> GetRepository<T>() where T : class;
         Task SaveChangeAsync();
