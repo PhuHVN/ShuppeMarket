@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using ShuppeMarket.Application.DTOs.AccountDtos;
 using ShuppeMarket.Domain.Abstractions;
+using ShuppeMarket.Domain.Entities;
 
 namespace MuseumSystem.Application.Dtos
 {
@@ -10,6 +12,8 @@ namespace MuseumSystem.Application.Dtos
             //Config Mapper Paging
             CreateMap(typeof(BasePaginatedList<>), typeof(BasePaginatedList<>))
                 .ConvertUsing(typeof(BasePaginatedListConverter<,>));
+            CreateMap<Accounts, AccountResponse>();
+            
 
         }
         public class BasePaginatedListConverter<TSource, TDestination> : ITypeConverter<BasePaginatedList<TSource>, BasePaginatedList<TDestination>>

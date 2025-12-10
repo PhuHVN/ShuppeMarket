@@ -1,8 +1,15 @@
+using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
+using MuseumSystem.Application.Dtos;
+using MuseumSystem.Application.Validation;
+using MuseumSystem.Domain.Enums.EnumConfig;
+using MuseumSystem.Infrastructure.Seed;
 using ShuppeMarket.API;
+using ShuppeMarket.API.Middleware;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
 using System.Security.Claims;
 using System.Text.Json;
@@ -140,7 +147,24 @@ builder.Services.AddAuthentication(options =>
 
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationFilter>();
+
+}).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new ExclusiveEnumConverterFactory(excludeFromString: new[] {typeof(StatusCodeHelper)}));
+});
+
+
+//Auto Mapper
+var mapperConfig = new MapperConfiguration(cfg =>
+{
+    cfg.AddProfile<MappingProfile>();
+});
+IMapper mapper = mapperConfig.CreateMapper();
+builder.Services.AddSingleton(mapper);
+
 //Add Dependency Injection
 builder.Services.AddConfig(builder.Configuration);
 
@@ -156,6 +180,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Init Database and Seed Admin Account
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    await seeder.SeedAdminAsync();
+}
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
