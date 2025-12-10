@@ -88,6 +88,7 @@ namespace ShuppeMarket.Infrastructure.Implemention
 
         public async Task<BasePaginatedList<T>> GetPagging(IQueryable<T> query, int index, int pageSize)
         {
+            query = query.OrderBy(x => EF.Property<object>(x, "Id"));
             var count = await query.CountAsync();
             var items = await query.Skip((index - 1) * pageSize).Take(pageSize).ToListAsync();
             return new BasePaginatedList<T>(items, count, index, pageSize);
