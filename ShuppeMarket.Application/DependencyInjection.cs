@@ -11,6 +11,8 @@ namespace ShuppeMarket.Application
         {
             // Application service registrations go here
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IGenerateTokenService, GenerateTokenService>();
+            services.AddScoped<IAuthService, AuthService>();
 
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);

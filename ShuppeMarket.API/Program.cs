@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -60,16 +61,23 @@ builder.Services.AddSwaggerGen(option =>
 //Jwt Authentication
 builder.Services.AddAuthentication(options =>
 {
-   options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme,options =>
+})
+.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+{
+    var googleSection = builder.Configuration.GetSection("Authentication:Google");
+    options.ClientId = googleSection["ClientId"];
+    options.ClientSecret = googleSection["ClientSecret"];
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     var jwtSettings = builder.Configuration.GetSection("Jwt");
     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidateLifetime =  true,
+        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
@@ -153,8 +161,9 @@ builder.Services.AddControllers(options =>
 
 }).AddJsonOptions(options =>
 {
-    options.JsonSerializerOptions.Converters.Add(new ExclusiveEnumConverterFactory(excludeFromString: new[] {typeof(StatusCodeHelper)}));
+    options.JsonSerializerOptions.Converters.Add(new ExclusiveEnumConverterFactory(excludeFromString: new[] { typeof(StatusCodeHelper) }));
 });
+builder.Services.AddHttpContextAccessor();
 
 
 //Auto Mapper
