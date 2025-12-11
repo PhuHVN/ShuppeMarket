@@ -53,7 +53,7 @@ jobs:
       - name: Set image name & tag
         id: vars
         run: |
-          echo "IMAGE=yourdockerhub/yourapi" >> $GITHUB_ENV
+          echo "IMAGE=phuho04/shuppemarket-api" >> $GITHUB_ENV
           echo "TAG=latest" >> $GITHUB_ENV
           echo "SHA_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
