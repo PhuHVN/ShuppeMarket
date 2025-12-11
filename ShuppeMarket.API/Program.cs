@@ -1,8 +1,16 @@
+using AutoMapper;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
+using MuseumSystem.Application.Dtos;
+using MuseumSystem.Application.Validation;
+using MuseumSystem.Domain.Enums.EnumConfig;
+using MuseumSystem.Infrastructure.Seed;
 using ShuppeMarket.API;
+using ShuppeMarket.API.Middleware;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
 using System.Security.Claims;
 using System.Text.Json;
@@ -53,16 +61,23 @@ builder.Services.AddSwaggerGen(option =>
 //Jwt Authentication
 builder.Services.AddAuthentication(options =>
 {
-   options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme,options =>
+})
+.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+{
+    var googleSection = builder.Configuration.GetSection("Authentication:Google");
+    options.ClientId = googleSection["ClientId"];
+    options.ClientSecret = googleSection["ClientSecret"];
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     var jwtSettings = builder.Configuration.GetSection("Jwt");
     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidateLifetime =  true,
+        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
@@ -140,7 +155,25 @@ builder.Services.AddAuthentication(options =>
 
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationFilter>();
+
+}).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new ExclusiveEnumConverterFactory(excludeFromString: new[] { typeof(StatusCodeHelper) }));
+});
+builder.Services.AddHttpContextAccessor();
+
+
+//Auto Mapper
+var mapperConfig = new MapperConfiguration(cfg =>
+{
+    cfg.AddProfile<MappingProfile>();
+});
+IMapper mapper = mapperConfig.CreateMapper();
+builder.Services.AddSingleton(mapper);
+
 //Add Dependency Injection
 builder.Services.AddConfig(builder.Configuration);
 
@@ -156,6 +189,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Init Database and Seed Admin Account
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    await seeder.SeedAdminAsync();
+}
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

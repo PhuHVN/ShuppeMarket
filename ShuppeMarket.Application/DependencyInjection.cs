@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Application.Services;
 
@@ -10,6 +11,11 @@ namespace ShuppeMarket.Application
         {
             // Application service registrations go here
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IGenerateTokenService, GenerateTokenService>();
+            services.AddScoped<IAuthService, AuthService>();
+
+
+            services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         }
 
 

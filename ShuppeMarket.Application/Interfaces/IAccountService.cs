@@ -1,4 +1,5 @@
-﻿using ShuppeMarket.Domain.Abstractions;
+﻿using ShuppeMarket.Application.DTOs.AccountDtos;
+using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,10 +11,10 @@ namespace ShuppeMarket.Application.Interfaces
 {
     public interface IAccountService
     {
-        Task<Accounts> CreateAccount();
-        Task<Accounts> UpdateAccount(Accounts account);
-        Task<Accounts> GetAccountById(string id);
-        Task<BasePaginatedList<Accounts>> GetAllAccounts();
+        Task<AccountResponse> CreateAccount(AccountRequest request);
+        Task<AccountResponse> UpdateAccount(string id,AccountUpdateRequest request);
+        Task<AccountResponse> GetAccountById(string id);
+        Task<BasePaginatedList<AccountResponse>> GetAllAccounts(int pageIndex, int pageSize);
         Task DeleteAccount(string id);
     }
 }
