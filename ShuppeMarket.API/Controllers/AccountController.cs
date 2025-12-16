@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MuseumSystem.Application.Dtos;
 using ShuppeMarket.Application.DTOs.AccountDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
+using ShuppeMarket.Domain.Enums;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace ShuppeMarket.API.Controllers
 {
+    [Authorize(Roles = Roles.Admin)]
     [Route("api/v1/accounts")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -55,6 +58,22 @@ namespace ShuppeMarket.API.Controllers
         {
             await _accountService.DeleteAccount(id);
             return Ok(ApiResponse<string>.OkResponse(null, "Account deleted successfully", "200"));
+        }
+
+        [HttpPut("{id}/assign-seller")]
+        [SwaggerOperation(Summary = "Assign seller account", Description = "Assigns a seller role to the specified account.")]
+        public async Task<IActionResult> AssignSellerAccount(string id, [FromBody] AccountUpdateRequest request)
+        {
+            var account = await _accountService.AssignSellerAccount(id, request);
+            return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Seller account assigned successfully", "200"));
+        }
+
+        [HttpPut("{id}/confirm-seller")]
+        [SwaggerOperation(Summary = "Confirm seller account", Description = "Confirms the seller account with the specified ID.")]
+        public async Task<IActionResult> ConfirmSellerAccount(string id)
+        {
+            var account = await _accountService.ConfirmSellerAccount(id);
+            return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Seller account confirmed successfully", "200"));
         }
     }
 }

@@ -21,13 +21,15 @@ namespace ShuppeMarket.Application.Services
         private readonly ILogger<AccountService> _logger;
         private readonly IMapper _mapper;
         private readonly IValidator<AccountRequest> _validator;
+        private readonly IValidator<AccountUpdateRequest> _updateValidator;
 
-        public AccountService(IUnitOfWork unitOfWork, ILogger<AccountService> logger, IMapper mapper, IValidator<AccountRequest> validator)
+        public AccountService(IUnitOfWork unitOfWork, ILogger<AccountService> logger, IMapper mapper, IValidator<AccountRequest> validator, IValidator<AccountUpdateRequest> updateValidator)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _mapper = mapper;
             _validator = validator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<AccountResponse> CreateAccount(AccountRequest request)
@@ -95,6 +97,8 @@ namespace ShuppeMarket.Application.Services
             {
                 throw new Exception("Invalid request.");
             }
+            await _updateValidator.ValidateAndThrowAsync(request);
+            //
             var accountExist = await _unitOfWork.GetRepository<Accounts>().GetByIdAsync(id);
             if (accountExist == null)
             {
@@ -123,6 +127,61 @@ namespace ShuppeMarket.Application.Services
                 await _unitOfWork.SaveChangeAsync();
                 _logger.LogInformation("Account with id: {Id} has been updated.", id);
             }
+            return _mapper.Map<AccountResponse>(accountExist);
+        }
+
+        public async Task<AccountResponse> AssignSellerAccount(string id, AccountUpdateRequest request)
+        {
+            await _updateValidator.ValidateAndThrowAsync(request);
+            var accountExist =  await _unitOfWork.GetRepository<Accounts>().GetByIdAsync(id);
+            if(accountExist == null)
+            {
+                throw new Exception("Account not found.");
+            }
+            var isUpdate = false;
+            if (!string.IsNullOrEmpty(request.FullName) && request.FullName != accountExist.FullName)
+            {
+                accountExist.FullName = request.FullName;
+                isUpdate = true;
+            }
+            if (!string.IsNullOrEmpty(request.Address) && request.Address != accountExist.Address)
+            {
+                accountExist.Address = request.Address;
+                isUpdate = true;
+            }
+            if (!string.IsNullOrEmpty(request.PhoneNumber) && request.PhoneNumber != accountExist.PhoneNumber)
+            {
+                accountExist.PhoneNumber = request.PhoneNumber;
+                isUpdate = true;
+            }
+            if (isUpdate || accountExist.Role != RoleEnum.Seller)
+            {
+                accountExist.Role = RoleEnum.Seller;
+                accountExist.LastUpdatedAt = DateTime.UtcNow;
+                accountExist.Status = StatusEnum.Pending;
+                await _unitOfWork.GetRepository<Accounts>().UpdateAsync(accountExist);
+                await _unitOfWork.SaveChangeAsync();
+                _logger.LogInformation("Account with id: {Id} has been assigned to Seller role.", id);
+            }
+            return _mapper.Map<AccountResponse>(accountExist);
+        }
+
+        public async Task<AccountResponse> ConfirmSellerAccount(string id)
+        {
+            var accountExist = await _unitOfWork.GetRepository<Accounts>().GetByIdAsync(id);
+            if (accountExist == null)
+            {
+                throw new Exception("Account not found.");
+            }
+            if (accountExist.Role != RoleEnum.Seller)
+            {
+                throw new Exception("Account is not a Seller.");
+            }
+            accountExist.Status = StatusEnum.Active;
+            accountExist.LastUpdatedAt = DateTime.UtcNow;
+            await _unitOfWork.GetRepository<Accounts>().UpdateAsync(accountExist);
+            await _unitOfWork.SaveChangeAsync();
+            _logger.LogInformation("Seller account with id: {Id} has been confirmed.", id);
             return _mapper.Map<AccountResponse>(accountExist);
         }
     }

@@ -38,7 +38,7 @@ namespace ShuppeMarket.Application.Services
             await _validator.ValidateAndThrowAsync(request);
             //
             var user = await _unitOfWork.GetRepository<Accounts>()
-                .FindAsync(x => x.Email == request.Email);
+                .FindAsync(x => x.Email == request.Email && x.Status != StatusEnum.Inactive);
             if (user == null)
             {
                 throw new UnauthorizedAccessException("Invalid email or password.");
@@ -67,7 +67,7 @@ namespace ShuppeMarket.Application.Services
                 var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken);
                 var email = payload.Email;
                 var fullName = payload.Name;
-                var user = await _unitOfWork.GetRepository<Accounts>().FindAsync(x => x.Email == email);
+                var user = await _unitOfWork.GetRepository<Accounts>().FindAsync(x => x.Email == email && x.Status != StatusEnum.Inactive);
                 if (user == null)
                 {
                     var newUser = new Accounts
