@@ -21,6 +21,7 @@ namespace ShuppeMarket.Domain.Enums
         Inactive = 0,
         Active = 1,
         Pending = 2,
+        
     }
     public static class Roles
     {

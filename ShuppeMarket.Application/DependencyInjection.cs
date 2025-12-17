@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Application.Services;
+using StackExchange.Redis;
 
 namespace ShuppeMarket.Application
 {
@@ -13,7 +14,9 @@ namespace ShuppeMarket.Application
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IGenerateTokenService, GenerateTokenService>();
             services.AddScoped<IAuthService, AuthService>();
-
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IOtpCacheService, OtpCacheService>();
+          
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         }
