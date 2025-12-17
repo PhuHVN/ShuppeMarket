@@ -14,6 +14,8 @@ namespace ShuppeMarket.Application.Interfaces
     {
         Task<AuthResponse> LoginAsync(DTOs.LoginDtos.LoginRequest request);
         Task<AuthResponse> LoginGoogleAsync(LoginGoogleRequest request);
+        Task<string> RegisterAsync(AccountRequest request);
         Task<AccountResponse> CurrentUser();
+        Task<string> VerifyOtp(string email,string otp);
     }
 }

@@ -12,8 +12,10 @@ using MuseumSystem.Infrastructure.Seed;
 using ShuppeMarket.API;
 using ShuppeMarket.API.Middleware;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
+using StackExchange.Redis;
 using System.Security.Claims;
 using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -176,7 +178,21 @@ builder.Services.AddSingleton(mapper);
 
 //Add Dependency Injection
 builder.Services.AddConfig(builder.Configuration);
+//Redis Cache
+var redisConfig = builder.Configuration.GetSection("Redis");
 
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect(new ConfigurationOptions
+    {
+        EndPoints =
+        {
+            { redisConfig["Host"], int.Parse(redisConfig["Port"]!) }
+        },
+        Password = redisConfig["Password"],
+        Ssl = true,
+        AbortOnConnectFail = false
+    })
+);
 //Entity Framework + SQL Server
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

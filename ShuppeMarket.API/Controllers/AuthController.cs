@@ -42,5 +42,21 @@ namespace ShuppeMarket.API.Controllers
             var response = await authService.CurrentUser();
             return Ok(ApiResponse<AccountResponse>.OkResponse(response, "Current user retrieved successfully", "200"));
         }
+
+        [HttpPost("register")]
+        [SwaggerOperation("Register User"), Description("Register a new user account")]
+        public async Task<IActionResult> Register([FromBody] AccountRequest request)
+        {
+            var message = await authService.RegisterAsync(request);
+            return Ok(ApiResponse<string>.OkResponse(message, "User registered successfully", "201"));
+        }
+
+        [HttpPost("verify-otp")]
+        [SwaggerOperation("Verify OTP"), Description("Verify OTP for user registration")]
+        public async Task<IActionResult> VerifyOtp([FromQuery] string email, [FromQuery] string otp)
+        {
+            var message = await authService.VerifyOtp(email, otp);
+            return Ok(ApiResponse<string>.OkResponse(message, "OTP verified successfully", "200"));
+        }
     }
 }
