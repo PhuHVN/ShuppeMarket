@@ -10,9 +10,9 @@ namespace ShuppeMarket.Application.Interfaces
 {
     public interface ISellerService
     {
-        Task<SellerResponse> RegisterSellerAccount(string accountId, SellerRequest sellerRequest);
+        Task<SellerResponse> RegisterSellerAccount(SellerRequest sellerRequest);
         Task<SellerResponse> GetSellerById(string id);
-        Task<SellerResponse> UpdateSellerAccount(string id, SellerUpdateRequest sellerUpdateRequest);
+        Task<SellerResponse> UpdateSellerAccount(SellerUpdateRequest sellerUpdateRequest);
         Task<BasePaginatedList<SellerResponse>> GetAllSellers(int pageIndex, int pageSize);
         Task<string> DeleteSellerAccount(string id);
         Task<SellerResponse> ApproveSellerAccount(string id);

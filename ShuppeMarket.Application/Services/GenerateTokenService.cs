@@ -55,7 +55,7 @@ namespace ShuppeMarket.Application.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error generating token");
-                throw new Exception(ex.Message);
+                throw new ArgumentException(ex.Message);
 
             }
 

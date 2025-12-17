@@ -52,7 +52,7 @@ namespace ShuppeMarket.Application.Services
             }
             catch (Exception ex)
             {
-                throw new Exception("Error sending mail: " + ex.Message);
+                throw new ArgumentException("Error sending mail: " + ex.Message);
             }
             finally
             {

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using ShuppeMarket.Application.DTOs.SellerDtos;
 using ShuppeMarket.Application.Interfaces;
@@ -9,6 +10,7 @@ using ShuppeMarket.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,34 +23,35 @@ namespace ShuppeMarket.Application.Services
         private readonly IValidator<SellerRequest> _validator;
         private readonly IValidator<SellerUpdateRequest> _validatorUpdate;
         private readonly IMapper _mapper;
-
-        public SellerService(IUnitOfWork unitOfWork, ILogger<SellerService> logger, IValidator<SellerRequest> validator, IValidator<SellerUpdateRequest> validatorUpdate, IMapper mapper)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public SellerService(IUnitOfWork unitOfWork, ILogger<SellerService> logger, IValidator<SellerRequest> validator, IValidator<SellerUpdateRequest> validatorUpdate, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _validator = validator;
             _validatorUpdate = validatorUpdate;
+            _httpContextAccessor = httpContextAccessor;
             _mapper = mapper;
         }
 
-        public async Task<SellerResponse> RegisterSellerAccount(string accountId, SellerRequest sellerRequest)
+        public async Task<SellerResponse> RegisterSellerAccount(SellerRequest sellerRequest)
         {
             await _validator.ValidateAndThrowAsync(sellerRequest);
 
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var user = await _unitOfWork.GetRepository<Account>().GetByIdAsync(accountId);
+                var user = await _unitOfWork.GetRepository<Account>().GetByIdAsync(sellerRequest.AccountId);
                 if (user == null)
                 {
-                    throw new KeyNotFoundException($"Account with ID {accountId} not found.");
+                    throw new KeyNotFoundException($"Account with ID {sellerRequest.AccountId} not found.");
                 }
                 if (user.Role == RoleEnum.Seller)
                 {
                     throw new InvalidOperationException("Account is already registered as a seller.");
                 }
                 var existingSeller = await _unitOfWork.GetRepository<Seller>()
-                    .FindAsync(s => s.AccountId == accountId);
+                    .FindAsync(s => s.AccountId == sellerRequest.AccountId);
                 if (existingSeller != null)
                 {
                     throw new InvalidOperationException("Seller account already exists for this user.");
@@ -87,14 +90,14 @@ namespace ShuppeMarket.Application.Services
                 //save db
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
-                _logger.LogInformation("Seller account registered successfully for AccountId: {AccountId}", accountId);
+                _logger.LogInformation("Seller account registered successfully for AccountId: {AccountId}", sellerRequest.AccountId);
                 return _mapper.Map<SellerResponse>(newSeller);
 
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollBackAsync();
-                _logger.LogError(ex, "Error registering seller account for AccountId: {AccountId}", accountId);
+                _logger.LogError(ex, "Error registering seller account for AccountId: {AccountId}", sellerRequest.AccountId);
                 throw;
             }
         }
@@ -153,18 +156,24 @@ namespace ShuppeMarket.Application.Services
             return "Seller account deleted successfully.";
         }
 
-        public async Task<SellerResponse> UpdateSellerAccount(string id, SellerUpdateRequest sellerUpdateRequest)
+        public async Task<SellerResponse> UpdateSellerAccount(SellerUpdateRequest sellerUpdateRequest)
         {
             await _validatorUpdate.ValidateAndThrowAsync(sellerUpdateRequest);
-            var seller = await _unitOfWork.GetRepository<Seller>().GetByIdAsync(id);
+            // 
+            var accountId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(accountId))
+            {
+                throw new Exception("Unauthorized to update this account.");
+            }
+
+            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == accountId);
             if (seller == null)
             {
                 throw new KeyNotFoundException("Seller with ID {id} not found.");
             }
-            var account = await _unitOfWork.GetRepository<Account>().GetByIdAsync(seller.AccountId);
-            if (account == null)
+            if(seller.Account.Status == StatusEnum.Inactive)
             {
-                throw new KeyNotFoundException($"Account with ID {seller.AccountId} not found.");
+                throw new InvalidOperationException("Cannot update an inactive seller account.");
             }
             var isUpdate = false;
             if (!string.IsNullOrEmpty(sellerUpdateRequest.ShopName) && sellerUpdateRequest.ShopName != seller.ShopName)
@@ -177,16 +186,6 @@ namespace ShuppeMarket.Application.Services
                 seller.Description = sellerUpdateRequest.Description;
                 isUpdate = true;
             }
-            if (!string.IsNullOrEmpty(sellerUpdateRequest.Address) && sellerUpdateRequest.Address != account.Address)
-            {
-                account.Address = sellerUpdateRequest.Address;
-                isUpdate = true;
-            }
-            if (!string.IsNullOrEmpty(sellerUpdateRequest.PhoneNumber) && sellerUpdateRequest.PhoneNumber != account.PhoneNumber)
-            {
-                account.PhoneNumber = sellerUpdateRequest.PhoneNumber;
-                isUpdate = true;
-            }
             if (!string.IsNullOrEmpty(sellerUpdateRequest.LogoUrl) && sellerUpdateRequest.LogoUrl != seller.LogoUrl)
             {
                 seller.LogoUrl = sellerUpdateRequest.LogoUrl;
@@ -197,16 +196,15 @@ namespace ShuppeMarket.Application.Services
                 await _unitOfWork.BeginTransactionAsync();
                 try
                 {
-                    account.LastUpdatedAt = DateTime.UtcNow;
+
                     await _unitOfWork.GetRepository<Seller>().UpdateAsync(seller);
-                    await _unitOfWork.GetRepository<Account>().UpdateAsync(account);
                     await _unitOfWork.SaveChangesAsync();
                     await _unitOfWork.CommitTransactionAsync();
                 }
                 catch
                 {
                     await _unitOfWork.RollBackAsync();
-                    _logger.LogError("Error updating seller account for SellerId: {SellerId}", id);
+                    _logger.LogError("Error updating seller account for SellerId: {SellerId}", seller.Id);
                     throw;
                 }
             }

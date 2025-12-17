@@ -12,7 +12,7 @@ namespace ShuppeMarket.Application.Interfaces
     public interface IAccountService
     {
         Task<AccountResponse> CreateAccount(AccountRequest request);
-        Task<AccountResponse> UpdateAccount(string id,AccountUpdateRequest request);
+        Task<AccountResponse> UpdateAccount(AccountUpdateRequest request);
         Task<AccountResponse> GetAccountById(string id);
         Task<BasePaginatedList<AccountResponse>> GetAllAccounts(int pageIndex, int pageSize);
         Task DeleteAccount(string id);
