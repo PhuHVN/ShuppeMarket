@@ -25,7 +25,7 @@ namespace ShuppeMarket.Application.Services
             this.logger = logger;
         }
 
-        public string GenerateToken(Accounts accounts)
+        public string GenerateToken(Account accounts)
         {
             try
             {
@@ -55,7 +55,7 @@ namespace ShuppeMarket.Application.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error generating token");
-                throw new Exception(ex.Message);
+                throw new ArgumentException(ex.Message);
 
             }
 
