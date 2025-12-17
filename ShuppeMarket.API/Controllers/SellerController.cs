@@ -20,6 +20,7 @@ namespace ShuppeMarket.API.Controllers
             this.sellerService = sellerService;
         }
 
+        [Authorize(Roles = Roles.Customer)]
         [HttpPost("register/{accountId}")]
         [SwaggerOperation(Summary = "Register a new seller account"), Description("Seller Register  ")]
         public async Task<IActionResult> RegisterSellerAccount(string accountId, [FromBody] SellerRequest sellerRequest)
@@ -28,6 +29,7 @@ namespace ShuppeMarket.API.Controllers
             return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Register seller account successful!", "201"));
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Get seller by ID"), Description("Get Seller by ID")]
         public async Task<IActionResult> GetSellerById(string id)
@@ -65,12 +67,12 @@ namespace ShuppeMarket.API.Controllers
             return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Approve seller account successful!", "200"));
         }
 
-
+        [Authorize]
         [HttpPut("{id}")]
         [SwaggerOperation(Summary = "Update seller account by ID"), Description("Update Seller account by ID")]
-        public async Task<IActionResult> UpdateSellerAccount(string id, [FromBody] SellerUpdateRequest sellerUpdateRequest)
+        public async Task<IActionResult> UpdateSellerAccount( [FromBody] SellerUpdateRequest sellerUpdateRequest)
         {
-            var sellerResponse = await sellerService.UpdateSellerAccount(id, sellerUpdateRequest);
+            var sellerResponse = await sellerService.UpdateSellerAccount( sellerUpdateRequest);
             return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Update seller account successful!", "200"));
         }
     }

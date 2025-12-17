@@ -30,7 +30,7 @@ namespace ShuppeMarket.API.Controllers
             return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Account created successfully", "201"));
         }
 
-     
+        [Authorize]
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Get account by ID", Description = "Retrieves the account details for the specified account ID.")]
         public async Task<IActionResult> GetAccountById(string id)
@@ -48,6 +48,7 @@ namespace ShuppeMarket.API.Controllers
             return Ok(ApiResponse<BasePaginatedList<AccountResponse>>.OkResponse(accounts, "Accounts retrieved successfully", "200"));
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         [SwaggerOperation(Summary = "Update account", Description = "Updates the details of an existing account.")]
         public async Task<IActionResult> UpdateAccount([FromBody] AccountUpdateRequest request)
