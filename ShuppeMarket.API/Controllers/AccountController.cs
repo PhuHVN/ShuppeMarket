@@ -49,7 +49,7 @@ namespace ShuppeMarket.API.Controllers
         }
 
         [Authorize]
-        [HttpPut("{id}")]
+        [HttpPut]
         [SwaggerOperation(Summary = "Update account", Description = "Updates the details of an existing account.")]
         public async Task<IActionResult> UpdateAccount([FromBody] AccountUpdateRequest request)
         {

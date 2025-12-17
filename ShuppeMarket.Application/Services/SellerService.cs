@@ -34,24 +34,24 @@ namespace ShuppeMarket.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<SellerResponse> RegisterSellerAccount(SellerRequest sellerRequest)
+        public async Task<SellerResponse> RegisterSellerAccount(string accountId, SellerRequest sellerRequest)
         {
             await _validator.ValidateAndThrowAsync(sellerRequest);
 
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var user = await _unitOfWork.GetRepository<Account>().GetByIdAsync(sellerRequest.AccountId);
+                var user = await _unitOfWork.GetRepository<Account>().GetByIdAsync(accountId);
                 if (user == null)
                 {
-                    throw new KeyNotFoundException($"Account with ID {sellerRequest.AccountId} not found.");
+                    throw new KeyNotFoundException($"Account with ID {accountId} not found.");
                 }
                 if (user.Role == RoleEnum.Seller)
                 {
                     throw new InvalidOperationException("Account is already registered as a seller.");
                 }
                 var existingSeller = await _unitOfWork.GetRepository<Seller>()
-                    .FindAsync(s => s.AccountId == sellerRequest.AccountId);
+                    .FindAsync(s => s.AccountId == accountId);
                 if (existingSeller != null)
                 {
                     throw new InvalidOperationException("Seller account already exists for this user.");
@@ -90,14 +90,14 @@ namespace ShuppeMarket.Application.Services
                 //save db
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
-                _logger.LogInformation("Seller account registered successfully for AccountId: {AccountId}", sellerRequest.AccountId);
+                _logger.LogInformation("Seller account registered successfully for AccountId: {AccountId}", accountId);
                 return _mapper.Map<SellerResponse>(newSeller);
 
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollBackAsync();
-                _logger.LogError(ex, "Error registering seller account for AccountId: {AccountId}", sellerRequest.AccountId);
+                _logger.LogError(ex, "Error registering seller account for AccountId: {AccountId}", accountId);
                 throw;
             }
         }
