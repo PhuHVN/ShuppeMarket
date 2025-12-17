@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 namespace ShuppeMarket.Application.DTOs.SellerDtos
 {
     public class SellerRequest
-    {        
-        public string AccountId { get; set; } = string.Empty;
+    {                
         public string ShopName { get; set; } = string.Empty;
         public string? Description { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
