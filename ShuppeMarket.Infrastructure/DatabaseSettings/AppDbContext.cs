@@ -14,7 +14,8 @@ namespace ShuppeMarket.Infrastructure.DatabaseSettings
         {
         }
         //DbSets 
-        public DbSet<Accounts> Accounts { get; set; }
+        public DbSet<Account> Accounts { get; set; }
+        public DbSet<Seller> Sellers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

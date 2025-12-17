@@ -10,7 +10,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace ShuppeMarket.API.Controllers
 {
-    [Authorize(Roles = Roles.Admin)]
+    
     [Route("api/v1/accounts")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -21,6 +21,7 @@ namespace ShuppeMarket.API.Controllers
             _accountService = accountService;
         }
 
+        [Authorize(Roles = Roles.Admin)]
         [HttpPost]
         [SwaggerOperation(Summary = "Create a new account", Description = "Creates a new account with the provided details.")]
         public async Task<IActionResult> CreateAccount([FromBody] AccountRequest request)
@@ -28,6 +29,8 @@ namespace ShuppeMarket.API.Controllers
             var account = await _accountService.CreateAccount(request);
             return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Account created successfully", "201"));
         }
+
+        [Authorize]
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Get account by ID", Description = "Retrieves the account details for the specified account ID.")]
         public async Task<IActionResult> GetAccountById(string id)
@@ -36,6 +39,7 @@ namespace ShuppeMarket.API.Controllers
             return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Account retrieved successfully", "200"));
         }
 
+        [Authorize(Roles = Roles.Admin)]
         [HttpGet]
         [SwaggerOperation(Summary = "Get all accounts", Description = "Retrieves a paginated list of all accounts.")]
         public async Task<IActionResult> GetAllAccounts(int pageIndex = 1, int pageSize = 10)
@@ -44,14 +48,16 @@ namespace ShuppeMarket.API.Controllers
             return Ok(ApiResponse<BasePaginatedList<AccountResponse>>.OkResponse(accounts, "Accounts retrieved successfully", "200"));
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         [SwaggerOperation(Summary = "Update account", Description = "Updates the details of an existing account.")]
-        public async Task<IActionResult> UpdateAccount(string id, [FromBody] AccountUpdateRequest request)
+        public async Task<IActionResult> UpdateAccount([FromBody] AccountUpdateRequest request)
         {
-            var account = await _accountService.UpdateAccount(id, request);
+            var account = await _accountService.UpdateAccount(request);
             return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Account updated successfully", "200"));
         }
 
+        [Authorize(Roles = Roles.Admin)]
         [HttpDelete("{id}")]
         [SwaggerOperation(Summary = "Delete account", Description = "Deletes the account with the specified ID.")]
         public async Task<IActionResult> DeleteAccount(string id)
@@ -60,20 +66,6 @@ namespace ShuppeMarket.API.Controllers
             return Ok(ApiResponse<string>.OkResponse(null, "Account deleted successfully", "200"));
         }
 
-        [HttpPut("{id}/assign-seller")]
-        [SwaggerOperation(Summary = "Assign seller account", Description = "Assigns a seller role to the specified account.")]
-        public async Task<IActionResult> AssignSellerAccount(string id, [FromBody] AccountUpdateRequest request)
-        {
-            var account = await _accountService.AssignSellerAccount(id, request);
-            return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Seller account assigned successfully", "200"));
-        }
-
-        [HttpPut("{id}/confirm-seller")]
-        [SwaggerOperation(Summary = "Confirm seller account", Description = "Confirms the seller account with the specified ID.")]
-        public async Task<IActionResult> ConfirmSellerAccount(string id)
-        {
-            var account = await _accountService.ConfirmSellerAccount(id);
-            return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Seller account confirmed successfully", "200"));
-        }
+        
     }
 }

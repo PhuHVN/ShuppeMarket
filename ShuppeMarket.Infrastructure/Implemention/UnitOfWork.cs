@@ -67,7 +67,8 @@ namespace ShuppeMarket.Infrastructure.Implemention
 
         public bool HasActiveTransaction()
         {
-            throw new NotImplementedException();
+            return _transaction != null;
+            
         }
 
         public async Task RollBackAsync()
@@ -79,9 +80,10 @@ namespace ShuppeMarket.Infrastructure.Implemention
                 _transaction = null;
             }
         }
-        public async Task SaveChangeAsync()
+        public async Task SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            if (_transaction == null)
+                await _context.SaveChangesAsync();
         }
     }
 }

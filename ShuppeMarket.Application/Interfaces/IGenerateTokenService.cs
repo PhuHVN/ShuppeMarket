@@ -9,6 +9,6 @@ namespace ShuppeMarket.Application.Interfaces
 {
     public interface IGenerateTokenService
     {
-        string GenerateToken(Accounts accounts);
+        string GenerateToken(Account accounts);
     }
 }

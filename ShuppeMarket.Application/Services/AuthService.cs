@@ -44,7 +44,7 @@ namespace ShuppeMarket.Application.Services
         {
             await _validator.ValidateAndThrowAsync(request);
             //
-            var user = await _unitOfWork.GetRepository<Accounts>()
+            var user = await _unitOfWork.GetRepository<Account>()
                 .FindAsync(x => x.Email == request.Email && x.Status != StatusEnum.Inactive);
             if (user == null)
             {
@@ -74,10 +74,10 @@ namespace ShuppeMarket.Application.Services
                 var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken);
                 var email = payload.Email;
                 var fullName = payload.Name;
-                var user = await _unitOfWork.GetRepository<Accounts>().FindAsync(x => x.Email == email && x.Status != StatusEnum.Inactive);
+                var user = await _unitOfWork.GetRepository<Account>().FindAsync(x => x.Email == email && x.Status != StatusEnum.Inactive);
                 if (user == null)
                 {
-                    var newUser = new Accounts
+                    var newUser = new Account
                     {
                         Email = email,
                         FullName = fullName,
@@ -88,8 +88,8 @@ namespace ShuppeMarket.Application.Services
                         Role = RoleEnum.Customer,
                         Password = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString())
                     };
-                    await _unitOfWork.GetRepository<Accounts>().InsertAsync(newUser);
-                    await _unitOfWork.SaveChangeAsync();
+                    await _unitOfWork.GetRepository<Account>().InsertAsync(newUser);
+                    await _unitOfWork.SaveChangesAsync();
                     user = newUser;
                 }
                 var token = _generateTokenService.GenerateToken(user);
@@ -118,7 +118,7 @@ namespace ShuppeMarket.Application.Services
             {
                 throw new UnauthorizedAccessException("User not authenticated.");
             }
-            var user = await _unitOfWork.GetRepository<Accounts>().GetByIdAsync(userId);
+            var user = await _unitOfWork.GetRepository<Account>().GetByIdAsync(userId);
             if (user == null)
             {
                 throw new UnauthorizedAccessException("User not found.");
@@ -131,7 +131,7 @@ namespace ShuppeMarket.Application.Services
         {
             await _registerValidator.ValidateAndThrowAsync(request);
 
-            var existingUser = await _unitOfWork.GetRepository<Accounts>()
+            var existingUser = await _unitOfWork.GetRepository<Account>()
                 .FindAsync(x => x.Email == request.Email);
             if (existingUser != null)
             {
@@ -149,7 +149,7 @@ namespace ShuppeMarket.Application.Services
                 }
 
             }
-            var newUser = new Accounts
+            var newUser = new Account
             {
                 Email = request.Email,
                 FullName = request.FullName,
@@ -160,8 +160,8 @@ namespace ShuppeMarket.Application.Services
                 Role = RoleEnum.Customer,
                 Password = BCrypt.Net.BCrypt.HashPassword(request.Password)
             };
-            await _unitOfWork.GetRepository<Accounts>().InsertAsync(newUser);
-            await _unitOfWork.SaveChangeAsync();
+            await _unitOfWork.GetRepository<Account>().InsertAsync(newUser);
+            await _unitOfWork.SaveChangesAsync();
 
             // Send OTP email for verification
             var otp = _otpCacheService.GenerateOTP();
@@ -188,15 +188,15 @@ namespace ShuppeMarket.Application.Services
                 throw new ArgumentException("Invalid OTP.");
             }
             await _otpCacheService.RemoveOtpAsync(email);
-            var user = await _unitOfWork.GetRepository<Accounts>()
+            var user = await _unitOfWork.GetRepository<Account>()
                 .FindAsync(x => x.Email == email && x.Status == StatusEnum.Inactive);
             if (user == null)
             {
                 throw new ArgumentException("User not found or already verified.");
             }
             user.Status = StatusEnum.Active;
-            await _unitOfWork.GetRepository<Accounts>().UpdateAsync(user);
-            await _unitOfWork.SaveChangeAsync();
+            await _unitOfWork.GetRepository<Account>().UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
             return "OTP verified successfully.";
         }
     }

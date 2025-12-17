@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ShuppeMarket.Domain.Entities
 {
-    public class Accounts
+    public class Account
     {
         [Key]
         public string Id { get; set; } = Guid.NewGuid().ToString();

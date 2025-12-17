@@ -34,7 +34,7 @@ namespace MuseumSystem.Infrastructure.Seed
 
             if (_context.Accounts.FirstOrDefault(x => x.Role == RoleEnum.Admin) is null)
             {
-                var admin = new Accounts
+                var admin = new Account
                 {
                     Id = Guid.NewGuid().ToString(),
                     Email = adminEmail,
