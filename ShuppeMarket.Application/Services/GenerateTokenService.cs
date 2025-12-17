@@ -25,7 +25,7 @@ namespace ShuppeMarket.Application.Services
             this.logger = logger;
         }
 
-        public string GenerateToken(Accounts accounts)
+        public string GenerateToken(Account accounts)
         {
             try
             {

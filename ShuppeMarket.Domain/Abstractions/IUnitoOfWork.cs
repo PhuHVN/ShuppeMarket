@@ -9,7 +9,7 @@ namespace ShuppeMarket.Domain.Abstractions
     public interface IUnitOfWork : IDisposable
     {
         IGenericRepository<T> GetRepository<T>() where T : class;
-        Task SaveChangeAsync();
+        Task SaveChangesAsync();
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollBackAsync();

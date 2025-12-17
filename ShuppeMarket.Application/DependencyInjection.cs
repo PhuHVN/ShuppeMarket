@@ -16,7 +16,8 @@ namespace ShuppeMarket.Application
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IOtpCacheService, OtpCacheService>();
-          
+            services.AddScoped<ISellerService, SellerService>();
+
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         }
