@@ -10,12 +10,11 @@ namespace ShuppeMarket.Infrastructure.DatabaseSettings
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         //DbSets 
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Seller> Sellers { get; set; }
+        public DbSet<Category> Categories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

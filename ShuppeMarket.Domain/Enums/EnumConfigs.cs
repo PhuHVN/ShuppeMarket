@@ -23,6 +23,7 @@ namespace ShuppeMarket.Domain.Enums
         Pending = 2,
         
     }
+
     public static class Roles
     {
         public const string Admin = "Admin";
