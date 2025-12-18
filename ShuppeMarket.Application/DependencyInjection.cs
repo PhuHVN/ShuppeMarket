@@ -1,4 +1,6 @@
-﻿using FluentValidation;
+﻿using CloudinaryDotNet;
+using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Application.Services;
@@ -17,7 +19,9 @@ namespace ShuppeMarket.Application
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IOtpCacheService, OtpCacheService>();
             services.AddScoped<ISellerService, SellerService>();
-
+            services.AddScoped<ICloudinary, Cloudinary>();
+            services.AddScoped<ICloudinaryService, CloudinaryService>();      
+            services.AddScoped<ICategoryService, CategoryService>();
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         }
