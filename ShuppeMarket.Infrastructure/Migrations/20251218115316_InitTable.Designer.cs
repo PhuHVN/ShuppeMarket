@@ -12,8 +12,8 @@ using ShuppeMarket.Infrastructure.DatabaseSettings;
 namespace ShuppeMarket.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251217115330_InitCategorytable")]
-    partial class InitCategorytable
+    [Migration("20251218115316_InitTable")]
+    partial class InitTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -87,6 +87,58 @@ namespace ShuppeMarket.Infrastructure.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("ShuppeMarket.Domain.Entities.CategoryProduct", b =>
+                {
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("CategoryId", "ProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("CategoryProduct");
+                });
+
+            modelBuilder.Entity("ShuppeMarket.Domain.Entities.Product", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("SellerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SellerId");
+
+                    b.ToTable("Product");
+                });
+
             modelBuilder.Entity("ShuppeMarket.Domain.Entities.Seller", b =>
                 {
                     b.Property<string>("Id")
@@ -113,6 +165,36 @@ namespace ShuppeMarket.Infrastructure.Migrations
                     b.ToTable("Sellers");
                 });
 
+            modelBuilder.Entity("ShuppeMarket.Domain.Entities.CategoryProduct", b =>
+                {
+                    b.HasOne("ShuppeMarket.Domain.Entities.Category", "Category")
+                        .WithMany("CategoryProducts")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShuppeMarket.Domain.Entities.Product", "Product")
+                        .WithMany("CategoryProducts")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("ShuppeMarket.Domain.Entities.Product", b =>
+                {
+                    b.HasOne("ShuppeMarket.Domain.Entities.Seller", "Seller")
+                        .WithMany("Products")
+                        .HasForeignKey("SellerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Seller");
+                });
+
             modelBuilder.Entity("ShuppeMarket.Domain.Entities.Seller", b =>
                 {
                     b.HasOne("ShuppeMarket.Domain.Entities.Account", "Account")
@@ -122,6 +204,21 @@ namespace ShuppeMarket.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("ShuppeMarket.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("CategoryProducts");
+                });
+
+            modelBuilder.Entity("ShuppeMarket.Domain.Entities.Product", b =>
+                {
+                    b.Navigation("CategoryProducts");
+                });
+
+            modelBuilder.Entity("ShuppeMarket.Domain.Entities.Seller", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }
