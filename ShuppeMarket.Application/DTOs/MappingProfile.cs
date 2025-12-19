@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ShuppeMarket.Application.DTOs.AccountDtos;
+using ShuppeMarket.Application.DTOs.ProductDtos;
 using ShuppeMarket.Application.DTOs.SellerDtos;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
@@ -21,6 +22,9 @@ namespace MuseumSystem.Application.Dtos
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Account.Address))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Account.PhoneNumber))
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Account.Role));
+
+            CreateMap<Product, ProductResponse>()
+                .ForMember(dest => dest.CategoryNames, opt => opt.MapFrom(src => src.CategoryProducts.Select(cp => cp.Category.Name).ToList()));
 
         }
         public class BasePaginatedListConverter<TSource, TDestination> : ITypeConverter<BasePaginatedList<TSource>, BasePaginatedList<TDestination>>

@@ -10,10 +10,10 @@ namespace ShuppeMarket.Application.Interfaces
 {
     public interface IProductService
     {
-        Task<ProductResponse> CreateProductAsync(ProductRequest request);
+        Task<ProductResponse> CreateProductAsync( ProductRequest request);
         Task<ProductResponse> UpdateProductAsync(string id, ProductUpdateRequest request);
-        Task<ProductResponse> DeleteProductAsync(string productId);
-        Task<BasePaginatedList<ProductResponse>> GetAllProductsAsync();
+        Task<string> DeleteProductAsync(string productId);
+        Task<BasePaginatedList<ProductResponse>> GetAllProductsAsync(int pageIndex, int pageSize);
         Task<ProductResponse> GetProductByIdAsync(string productId);
     }
 }
