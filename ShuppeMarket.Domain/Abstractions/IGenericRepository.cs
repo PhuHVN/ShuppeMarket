@@ -17,9 +17,11 @@ namespace ShuppeMarket.Domain.Abstractions
         Task<T> UpdateAsync(T entity);
         Task DeleteAsync(Object id);
         Task<T?> FindAsync(Expression<Func<T, bool>> predicate, Func<IQueryable<T>, IQueryable<T>>? include = null);
-        Task<IList<T>> FilterByAsync(Expression<Func<T, bool>> predicate);
+        Task<IList<T>> FilterByAsync(Expression<Func<T, bool>> predicate, Func<IQueryable<T>, IQueryable<T>>? include = null);
         Task<BasePaginatedList<T>> GetPagging(IQueryable<T> query, int index, int pageSize);
         IQueryable<T> GetQueryable();
         Task DeleteRangeAsync(IEnumerable<T> entities);
+
+
     }
 }

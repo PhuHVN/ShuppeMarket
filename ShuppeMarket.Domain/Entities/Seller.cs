@@ -20,6 +20,8 @@ namespace ShuppeMarket.Domain.Entities
       
         // Navigation Properties
         public Account Account { get; private set; }
+        // Products 
+        public ICollection<Product> Products { get; set; } = new List<Product>();
 
     }
 }

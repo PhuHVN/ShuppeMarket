@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShuppeMarket.Application.DTOs.SellerDtos;
 using ShuppeMarket.Application.Interfaces;
@@ -13,6 +14,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+
 
 namespace ShuppeMarket.Application.Services
 {
@@ -104,7 +106,7 @@ namespace ShuppeMarket.Application.Services
 
         public async Task<SellerResponse> GetSellerById(string id)
         {
-            var seller = await _unitOfWork.GetRepository<Seller>().GetByIdAsync(id);
+            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.Id == id, x => x.Include(x => x.Account));
             if (seller == null)
             {
                 throw new KeyNotFoundException($"Seller with ID {id} not found.");
@@ -114,7 +116,7 @@ namespace ShuppeMarket.Application.Services
 
         public async Task<BasePaginatedList<SellerResponse>> GetAllSellers(int pageIndex, int pageSize)
         {
-            var sellersQuery = _unitOfWork.GetRepository<Seller>().Entity.Where(x => x.Account.Status == StatusEnum.Active);
+            var sellersQuery = _unitOfWork.GetRepository<Seller>().Entity.Where(x => x.Account.Status == StatusEnum.Active).Include(x => x.Account);
             var rs = await _unitOfWork.GetRepository<Seller>().GetPagging(sellersQuery, pageIndex, pageSize);
             return _mapper.Map<BasePaginatedList<SellerResponse>>(rs);
 
@@ -122,7 +124,7 @@ namespace ShuppeMarket.Application.Services
 
         public async Task<SellerResponse> ApproveSellerAccount(string id)
         {
-            var seller = await _unitOfWork.GetRepository<Seller>().GetByIdAsync(id);
+            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.Id == id, q => q.Include(x => x.Account));
             if (seller == null)
             {
                 throw new KeyNotFoundException($"Seller with ID {id} not found.");
@@ -133,6 +135,8 @@ namespace ShuppeMarket.Application.Services
                 throw new KeyNotFoundException($"Account with ID {seller.AccountId} not found.");
             }
             account.Status = StatusEnum.Active;
+            account.Role = RoleEnum.Seller;
+            account.LastUpdatedAt = DateTime.UtcNow;
             await _unitOfWork.GetRepository<Account>().UpdateAsync(account);
             await _unitOfWork.SaveChangesAsync();
             return _mapper.Map<SellerResponse>(seller);
@@ -166,7 +170,7 @@ namespace ShuppeMarket.Application.Services
                 throw new Exception("Unauthorized to update this account.");
             }
 
-            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == accountId);
+            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == accountId, q => q.Include(x => x.Account));
             if (seller == null)
             {
                 throw new KeyNotFoundException("Seller with ID {id} not found.");

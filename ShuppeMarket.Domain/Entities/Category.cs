@@ -15,6 +15,8 @@ namespace ShuppeMarket.Domain.Entities
         [Required]
         public string Name { get; set; } = string.Empty;
         public DateTime CreateAt { get; set; }
-        public StatusEnum Status { get; set; } 
+        public StatusEnum Status { get; set; }
+        // Navigation property 
+        public ICollection<CategoryProduct> CategoryProducts { get; set; } = new List<CategoryProduct>();
     }
 }

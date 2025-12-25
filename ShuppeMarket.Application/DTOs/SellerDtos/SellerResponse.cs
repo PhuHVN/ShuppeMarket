@@ -18,6 +18,7 @@ namespace ShuppeMarket.Application.DTOs.SellerDtos
         public string PhoneNumber { get; set; } = string.Empty;
         public string? LogoUrl { get; set; } = string.Empty;
         public RoleEnum Role { get; set; }
+        public StatusEnum Status { get; set; }
 
     }
 }

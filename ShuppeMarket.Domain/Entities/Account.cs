@@ -12,8 +12,7 @@ namespace ShuppeMarket.Domain.Entities
     {
         [Key]
         public string Id { get; set; } = Guid.NewGuid().ToString();
-        [Required]
-        [EmailAddress(ErrorMessage = "Invalid email address")]
+        [Required]     
         public string Email { get; set; } = string.Empty;
         [Required]
         public string Password { get; set; } = string.Empty;              
