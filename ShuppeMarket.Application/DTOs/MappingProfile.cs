@@ -17,11 +17,12 @@ namespace MuseumSystem.Application.Dtos
             //Other Mappings
             CreateMap<Account, AccountResponse>();
             CreateMap<Seller, SellerResponse>()
-               .ForMember(dest => dest.AccountId, opt => opt.MapFrom(src => src.Account.Id))
+                .ForMember(dest => dest.AccountId, opt => opt.MapFrom(src => src.Account.Id))
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.Account.FullName))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Account.Address))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Account.PhoneNumber))
-                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Account.Role));
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Account.Role))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Account.Status));
 
             CreateMap<Product, ProductResponse>()
                 .ForMember(dest => dest.CategoryNames, opt => opt.MapFrom(src => src.CategoryProducts.Select(cp => cp.Category.Name).ToList()));
