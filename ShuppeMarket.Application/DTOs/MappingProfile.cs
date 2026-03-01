@@ -25,6 +25,7 @@ namespace MuseumSystem.Application.Dtos
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Account.Status));
 
             CreateMap<Product, ProductResponse>()
+                .ForMember(dest => dest.SellerName, opt => opt.MapFrom(src => src.Seller.Account.FullName))
                 .ForMember(dest => dest.CategoryNames, opt => opt.MapFrom(src => src.CategoryProducts.Select(cp => cp.Category.Name).ToList()));
 
         }

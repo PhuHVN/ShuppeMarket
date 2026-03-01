@@ -12,7 +12,7 @@ namespace ShuppeMarket.Application.Interfaces
     {
         Task<Category> CreateCategoryAsync(string name);
         Task<BasePaginatedList<Category>> GetAllCategoriesAsync(int pageIndex, int pageSize);
-        Task<Category?> GetCategoryByIdAsync(string id);
+        Task<Category> GetCategoryByIdAsync(string id);
         Task<Category> UpdateCategoryAsync(string id, string name);
         Task<string> DeleteCategoryAsync(string id);
     }

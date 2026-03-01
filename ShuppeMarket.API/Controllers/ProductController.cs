@@ -4,6 +4,7 @@ using MuseumSystem.Application.Dtos;
 using ShuppeMarket.Application.DTOs.ProductDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
+using ShuppeMarket.Domain.ResultError;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace ShuppeMarket.API.Controllers
@@ -26,7 +27,11 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetProductByIdAsync(string id)
         {
             var product = await _productService.GetProductByIdAsync(id);
-            return Ok(ApiResponse<ProductResponse>.OkResponse(product, "Get product successful!", "200"));
+            if (product.IsFailure)
+            {
+                return NotFound(ApiResponse<ProductResponse>.NotFoundResponse("Product not found"));
+            }
+            return Ok(ApiResponse<ProductResponse>.OkResponse(product.Value, "Get product successful!", "200"));
         }
 
         [HttpGet]
