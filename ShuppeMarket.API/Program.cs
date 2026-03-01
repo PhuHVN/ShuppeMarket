@@ -200,11 +200,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 // Init Database and Seed Admin Account
 using (var scope = app.Services.CreateScope())
