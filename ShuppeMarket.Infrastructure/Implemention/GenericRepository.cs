@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ShuppeMarket.Infrastructure.Implemention
 {
-    public class GenericRepository <T> : IGenericRepository<T> where T : class
+    public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         private readonly AppDbContext _context;
         private readonly DbSet<T> _dbSet;
@@ -31,9 +31,15 @@ namespace ShuppeMarket.Infrastructure.Implemention
             }
         }
 
-        public async Task<IList<T>> FilterByAsync(Expression<Func<T, bool>> predicate)
+        public async Task<IList<T>> FilterByAsync(
+    Expression<Func<T, bool>> predicate,
+    Func<IQueryable<T>, IQueryable<T>>? include = null)
         {
-            return await _dbSet.Where(predicate).ToListAsync();
+            IQueryable<T> query = _dbSet;
+            if (include != null)
+                query = include(query);
+
+            return await query.Where(predicate).ToListAsync();
         }
 
         public async Task<IList<T>> GetAllAsync(
@@ -46,9 +52,7 @@ namespace ShuppeMarket.Infrastructure.Implemention
             return await query.ToListAsync();
         }
 
-        public async Task<T?> FindAsync(
-            Expression<Func<T, bool>> predicate,
-            Func<IQueryable<T>, IQueryable<T>>? include = null)
+        public async Task<T?> FindAsync(Expression<Func<T, bool>> predicate, Func<IQueryable<T>, IQueryable<T>>? include = null)
         {
             IQueryable<T> query = _dbSet;
             if (include != null)
@@ -70,7 +74,7 @@ namespace ShuppeMarket.Infrastructure.Implemention
 
         public async Task InsertAsync(T entity)
         {
-            await _dbSet.AddAsync(entity);           
+            await _dbSet.AddAsync(entity);
         }
 
         public async Task<T> UpdateAsync(T entity)

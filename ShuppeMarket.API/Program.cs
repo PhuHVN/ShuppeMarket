@@ -194,7 +194,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
     })
 );
 //Entity Framework + SQL Server
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 

@@ -21,7 +21,7 @@ namespace ShuppeMarket.API.Controllers
             _accountService = accountService;
         }
 
-        [Authorize(Roles = Roles.Admin)]
+        [Authorize(Roles = Roles.Customer )]
         [HttpPost]
         [SwaggerOperation(Summary = "Create a new account", Description = "Creates a new account with the provided details.")]
         public async Task<IActionResult> CreateAccount([FromBody] AccountRequest request)
