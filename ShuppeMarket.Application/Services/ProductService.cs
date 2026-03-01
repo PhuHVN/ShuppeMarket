@@ -1,12 +1,15 @@
 ﻿using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using ShuppeMarket.Application.DTOs.ProductDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 using ShuppeMarket.Domain.Enums;
+using ShuppeMarket.Domain.ResultError;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +44,13 @@ namespace ShuppeMarket.Application.Services
                 _logger.LogWarning("User ID not found in HTTP context.");
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
+            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == userId && x.Account.Status == StatusEnum.Active && x.Account.Role == RoleEnum.Seller);
+            if (seller == null)
+            {
+                _logger.LogWarning("Only sellers can create products.");
+                throw new UnauthorizedAccessException("Only sellers can create products.");
+            }
+
             var categories = await _unitOfWork.GetRepository<Category>().FilterByAsync(x => request.CategoryIds.Contains(x.Id));
             if (categories.Count() != request.CategoryIds.Count)
             {
@@ -54,7 +64,8 @@ namespace ShuppeMarket.Application.Services
                 Description = request.Description,
                 Price = request.Price,
                 CreateAt = DateTime.UtcNow,
-                SellerId = userId,
+                SellerId = seller.Id,
+                Status = StatusEnum.Active
 
             };
             foreach (var category in categories)
@@ -73,7 +84,7 @@ namespace ShuppeMarket.Application.Services
         }
         public async Task<string> DeleteProductAsync(string productId)
         {
-            var product = await  _unitOfWork.GetRepository<Product>().GetByIdAsync(productId);
+            var product = await _unitOfWork.GetRepository<Product>().GetByIdAsync(productId);
             if (product == null)
             {
                 _logger.LogWarning($"Product with ID {productId} not found.");
@@ -87,15 +98,20 @@ namespace ShuppeMarket.Application.Services
 
         public async Task<BasePaginatedList<ProductResponse>> GetAllProductsAsync(int pageIndex, int pageSize)
         {
-            var query = _unitOfWork.GetRepository<Product>().Entity;
+            var query = _unitOfWork.GetRepository<Product>().Entity.Include(x => x.Seller).Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category);
             var result = await _unitOfWork.GetRepository<Product>().GetPagging(query, pageIndex, pageSize);
             return mapper.Map<BasePaginatedList<ProductResponse>>(result);
         }
 
-        public async Task<ProductResponse> GetProductByIdAsync(string productId)
+        public async Task<Result<ProductResponse>> GetProductByIdAsync(string productId)
         {
-            var product = await _unitOfWork.GetRepository<Product>().GetByIdAsync(productId);
-            return mapper.Map<ProductResponse>(product);
+            var product = await _unitOfWork.GetRepository<Product>().FindAsync(x => x.Id == productId , x => x.Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category));
+            if(product == null)
+            {
+               return Result<ProductResponse>.Fail(Error.NotFound);
+            }
+            var mappedProduct = mapper.Map<ProductResponse>(product);
+            return Result<ProductResponse>.Success(mappedProduct);
         }
 
         public Task<ProductResponse> UpdateProductAsync(string id, ProductUpdateRequest request)

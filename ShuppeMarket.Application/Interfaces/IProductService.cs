@@ -1,5 +1,6 @@
 ﻿using ShuppeMarket.Application.DTOs.ProductDtos;
 using ShuppeMarket.Domain.Abstractions;
+using ShuppeMarket.Domain.ResultError;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,6 @@ namespace ShuppeMarket.Application.Interfaces
         Task<ProductResponse> UpdateProductAsync(string id, ProductUpdateRequest request);
         Task<string> DeleteProductAsync(string productId);
         Task<BasePaginatedList<ProductResponse>> GetAllProductsAsync(int pageIndex, int pageSize);
-        Task<ProductResponse> GetProductByIdAsync(string productId);
+        Task<Result<ProductResponse>> GetProductByIdAsync(string productId);
     }
 }

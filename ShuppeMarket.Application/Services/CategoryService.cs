@@ -57,12 +57,12 @@ namespace ShuppeMarket.Application.Services
             return rs;
         }
 
-        public Task<Category?> GetCategoryByIdAsync(string id)
+        public async Task<Category> GetCategoryByIdAsync(string id)
         {
-            var category = _unitOfWork.GetRepository<Category>().GetByIdAsync(id);
+            var category = await _unitOfWork.GetRepository<Category>().GetByIdAsync(id);
             if (category == null)
             {
-                throw new ArgumentException("Category not found", nameof(id));
+                throw new KeyNotFoundException("Category not found");
             }
             return category;
         }
