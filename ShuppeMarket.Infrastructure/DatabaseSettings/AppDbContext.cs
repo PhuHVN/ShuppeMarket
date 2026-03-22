@@ -13,6 +13,7 @@ namespace ShuppeMarket.Infrastructure.DatabaseSettings
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         //DbSets 
         public DbSet<Account> Accounts { get; set; }
+        public DbSet<Product> Products { get; set; }
         public DbSet<Seller> Sellers { get; set; }
         public DbSet<Category> Categories { get; set; }
 

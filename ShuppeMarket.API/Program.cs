@@ -1,8 +1,10 @@
 using AutoMapper;
+using CloudinaryDotNet;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
 using MuseumSystem.Application.Dtos;
@@ -11,6 +13,8 @@ using MuseumSystem.Domain.Enums.EnumConfig;
 using MuseumSystem.Infrastructure.Seed;
 using ShuppeMarket.API;
 using ShuppeMarket.API.Middleware;
+using ShuppeMarket.Application.Interfaces;
+using ShuppeMarket.Application.Services;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
 using StackExchange.Redis;
 using System.Security.Claims;
@@ -178,24 +182,42 @@ builder.Services.AddSingleton(mapper);
 
 //Add Dependency Injection
 builder.Services.AddConfig(builder.Configuration);
+
+//Cloudinary
+var cloudName = builder.Configuration["Cloudinary:CloudName"];
+var apiKey = builder.Configuration["Cloudinary:ApiKey"];
+var apiSecret = builder.Configuration["Cloudinary:ApiSecret"];
+
+var account = new Account(cloudName, apiKey, apiSecret);
+var cloudinary = new Cloudinary(account);
+builder.Services.AddSingleton<ICloudinary>(sp => cloudinary);
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
 //Redis Cache
 var redisConfig = builder.Configuration.GetSection("Redis");
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
-    ConnectionMultiplexer.Connect(new ConfigurationOptions
+{
+    var host = redisConfig["Host"];
+    var port = redisConfig["Port"] ?? "6379";
+    var password = redisConfig["Token"];
+
+    var options = new ConfigurationOptions
     {
-        EndPoints =
-        {
-            { redisConfig["Host"], int.Parse(redisConfig["Port"]!) }
-        },
-        Password = redisConfig["Password"],
+        EndPoints = { { host!, int.Parse(port) } },
+        Password = password,
         Ssl = true,
-        AbortOnConnectFail = false
-    })
-);
+        AbortOnConnectFail = false,
+        ConnectTimeout = 10000, 
+        SyncTimeout = 10000,
+        KeepAlive = 30
+    };
+
+    return ConnectionMultiplexer.Connect(options);
+});
 //Entity Framework + SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 

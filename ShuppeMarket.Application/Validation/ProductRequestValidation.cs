@@ -21,6 +21,8 @@ namespace ShuppeMarket.Application.Validation
 
             RuleFor(x => x.Price)
                 .GreaterThan(0).WithMessage("Product price must be greater than zero.");
+            RuleFor(x => x.Quantity)
+                .GreaterThanOrEqualTo(0).WithMessage("Product quantity cannot be negative.");
             RuleFor(x => x.CategoryIds)
                 .NotNull().WithMessage("Category IDs cannot be null.")
                 .NotEmpty().WithMessage("At least one category ID is required.");
