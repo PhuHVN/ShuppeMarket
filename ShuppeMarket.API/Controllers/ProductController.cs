@@ -50,7 +50,7 @@ namespace ShuppeMarket.API.Controllers
             Summary = "Create a new product",
             Description = "Create a new product with the provided details."
         )]
-        public async Task<IActionResult> CreateProductAsync([FromBody] ProductRequest request)
+        public async Task<IActionResult> CreateProductAsync([FromForm] ProductRequest request)
         {
             var product = await _productService.CreateProductAsync(request);
             return Ok(ApiResponse<ProductResponse>.OkResponse(product, "Create product successful!", "201"));

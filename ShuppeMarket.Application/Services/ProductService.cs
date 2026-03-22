@@ -26,13 +26,15 @@ namespace ShuppeMarket.Application.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IValidator<ProductRequest> _productRequestValidator;
         private readonly IMapper mapper;
-        public ProductService(IUnitOfWork unitOfWork, ILogger<ProductService> logger, IHttpContextAccessor httpContextAccessor, IValidator<ProductRequest> productRequestValidator, IMapper mapper)
+        private readonly ICloudinaryService _cloudinary;
+        public ProductService(IUnitOfWork unitOfWork, ILogger<ProductService> logger, IHttpContextAccessor httpContextAccessor, IValidator<ProductRequest> productRequestValidator, IMapper mapper, ICloudinaryService cloudinary)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _productRequestValidator = productRequestValidator;
             this.mapper = mapper;
+            _cloudinary = cloudinary;
         }
         public async Task<ProductResponse> CreateProductAsync(ProductRequest request)
         {
@@ -50,6 +52,16 @@ namespace ShuppeMarket.Application.Services
                 _logger.LogWarning("Only sellers can create products.");
                 throw new UnauthorizedAccessException("Only sellers can create products.");
             }
+            var ImgUrl = string.Empty;
+            if(request.Image != null)
+            {
+                ImgUrl = await _cloudinary.UploadImageAsync(request.Image);
+                if (ImgUrl == null)
+                {
+                    _logger.LogError("Image upload failed.");
+                    throw new Exception("Image upload failed.");
+                }
+            }
 
             var categories = await _unitOfWork.GetRepository<Category>().FilterByAsync(x => request.CategoryIds.Contains(x.Id));
             if (categories.Count() != request.CategoryIds.Count)
@@ -63,6 +75,8 @@ namespace ShuppeMarket.Application.Services
                 Name = request.Name,
                 Description = request.Description,
                 Price = request.Price,
+                Quantity = request.Quantity,
+                ImageUrl = ImgUrl,
                 CreateAt = DateTime.UtcNow,
                 SellerId = seller.Id,
                 Status = StatusEnum.Active
