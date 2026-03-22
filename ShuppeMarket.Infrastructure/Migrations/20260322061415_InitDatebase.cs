@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ShuppeMarket.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAccountTable : Migration
+    public partial class InitDatebase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,16 +15,16 @@ namespace ShuppeMarket.Infrastructure.Migrations
                 name: "Accounts",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastUpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Role = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Password = table.Column<string>(type: "text", nullable: false),
+                    FullName = table.Column<string>(type: "text", nullable: false),
+                    Address = table.Column<string>(type: "text", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Role = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -35,10 +35,10 @@ namespace ShuppeMarket.Infrastructure.Migrations
                 name: "Categories",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreateAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    CreateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -49,11 +49,11 @@ namespace ShuppeMarket.Infrastructure.Migrations
                 name: "Sellers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ShopName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LogoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    AccountId = table.Column<string>(type: "text", nullable: false),
+                    ShopName = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    LogoUrl = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -67,23 +67,25 @@ namespace ShuppeMarket.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Product",
+                name: "Products",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    CreateAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdateAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    SellerId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    ImageUrl = table.Column<string>(type: "text", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    CreateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    SellerId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Product", x => x.Id);
+                    table.PrimaryKey("PK_Products", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Product_Sellers_SellerId",
+                        name: "FK_Products_Sellers_SellerId",
                         column: x => x.SellerId,
                         principalTable: "Sellers",
                         principalColumn: "Id",
@@ -94,8 +96,8 @@ namespace ShuppeMarket.Infrastructure.Migrations
                 name: "CategoryProduct",
                 columns: table => new
                 {
-                    CategoryId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProductId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    CategoryId = table.Column<string>(type: "text", nullable: false),
+                    ProductId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -107,9 +109,9 @@ namespace ShuppeMarket.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_CategoryProduct_Product_ProductId",
+                        name: "FK_CategoryProduct_Products_ProductId",
                         column: x => x.ProductId,
-                        principalTable: "Product",
+                        principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -120,8 +122,8 @@ namespace ShuppeMarket.Infrastructure.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Product_SellerId",
-                table: "Product",
+                name: "IX_Products_SellerId",
+                table: "Products",
                 column: "SellerId");
 
             migrationBuilder.CreateIndex(
@@ -140,7 +142,7 @@ namespace ShuppeMarket.Infrastructure.Migrations
                 name: "Categories");
 
             migrationBuilder.DropTable(
-                name: "Product");
+                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Sellers");
