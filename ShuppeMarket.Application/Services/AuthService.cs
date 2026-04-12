@@ -60,8 +60,6 @@ namespace ShuppeMarket.Application.Services
             var token = _generateTokenService.GenerateToken(user);
             return new AuthResponse
             {
-                UserId = user.Id.ToString(),
-                Role = user.Role.ToString(),
                 Token = token.ToString()
             };
 
@@ -95,8 +93,6 @@ namespace ShuppeMarket.Application.Services
                 var token = _generateTokenService.GenerateToken(user);
                 return new AuthResponse
                 {
-                    UserId = user.Id.ToString(),
-                    Role = user.Role.ToString(),
                     Token = token
                 };
             }
