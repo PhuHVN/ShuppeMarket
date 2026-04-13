@@ -9,6 +9,7 @@ using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 using ShuppeMarket.Domain.Enums;
 using ShuppeMarket.Domain.ResultError;
+using System.Linq.Expressions;
 using System.Security.Claims;
 
 namespace ShuppeMarket.Application.Services
@@ -112,15 +113,17 @@ namespace ShuppeMarket.Application.Services
         {
             var query = _unitOfWork.GetRepository<Product>().Entity.Include(x => x.Seller).Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category).AsQueryable() ;
             query = query.Where(x => x.Status == StatusEnum.Active);
+
             if (!string.IsNullOrEmpty(orderBy))
             {
                 query = query.OrderByDescending(x => x.CreateAt);
             }
             var map = mapper.ConfigurationProvider;
-            var result = await _unitOfWork.GetRepository<Product>().GetAllWithPaggingSortSelectionFieldAsync<Product, ProductResponse>(query, map, searchTerm, orderBy, fields, pageIndex, pageSize);
+            var fieldsToSearch = new[] { "Name", "Description" };
+            var result = await _unitOfWork.GetRepository<Product>().GetAllWithPaggingSortSelectionFieldAsync<Product, ProductResponse>(query, map, searchTerm, fieldsToSearch, orderBy, fields, pageIndex, pageSize);
             return result;
         }
-
+        
         public async Task<Result<ProductResponse>> GetProductByIdAsync(string productId)
         {
             var product = await _unitOfWork.GetRepository<Product>().FindAsync(x => x.Id == productId , x => x.Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category));

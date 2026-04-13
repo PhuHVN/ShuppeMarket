@@ -28,6 +28,7 @@ namespace ShuppeMarket.Domain.Abstractions
             IQueryable<TEntity> query,
             IConfigurationProvider mapperConfig,
             string? searchTerm = null,
+            string[]? searchFields = null,
             string? orderBy = null,
             string? fields = null,
             int pageIndex = 1,

@@ -15,6 +15,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace ShuppeMarket.Application.Services
 {
@@ -28,6 +29,7 @@ namespace ShuppeMarket.Application.Services
         private readonly IValidator<AccountRequest> _registerValidator;
         private readonly IEmailService _emailService;
         private readonly IOtpCacheService _otpCacheService;
+        
 
         public AuthService(IUnitOfWork unitOfWork, IGenerateTokenService generateTokenService, IValidator<LoginRequest> validator, IHttpContextAccessor httpContextAccessor, IMapper mapper, IValidator<AccountRequest> registerValidator, IEmailService emailService, IOtpCacheService otpCacheService)
         {
@@ -166,6 +168,21 @@ namespace ShuppeMarket.Application.Services
 
             return "Registration successful. Please check your email for the OTP to verify your account.";
 
+        }
+        public async Task<Account> GetCurrentUserLoginAsync()
+        {
+            var context = _httpContextAccessor.HttpContext;
+            var userId = context?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                throw new UnauthorizedAccessException("User not authenticated.");
+            }
+            var user = await _unitOfWork.GetRepository<Account>().FindAsync(x => x.Id == userId && x.Status == StatusEnum.Active);
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("User not found.");
+            }
+            return user;
         }
 
         public async Task<string> VerifyOtp(string email, string otp)
