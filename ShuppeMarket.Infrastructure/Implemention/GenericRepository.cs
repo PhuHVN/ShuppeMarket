@@ -1,12 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShuppeMarket.Infrastructure.Implemention
 {
@@ -106,6 +104,98 @@ namespace ShuppeMarket.Infrastructure.Implemention
             _dbSet.RemoveRange(entities);
             await Task.CompletedTask;
         }
+        public async Task<BasePaginatedList<object>> GetAllWithPaggingSortSelectionFieldAsync<TEntity, TResponse>(
+            IQueryable<TEntity> query,
+            IConfigurationProvider mapperConfig,
+            string? searchTerm = null,
+            string? orderBy = null,
+            string? fields = null,
+            int pageIndex = 1,
+            int pageSize = 10)
+        {
 
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where($"Name.ToLower().Contains(@0) || Description.ToLower().Contains(@0)"
+                    , searchTerm.ToLower());
+            }
+
+            // 1. Validation Fields dựa trên TResponse
+            // Nói cách khác , chỉ những field nào tồn tại trong TResponse mới được phép chọn và sắp xếp
+            // Việc này tránh select data không cần thiết từ database, đồng thời cũng giúp bảo mật khi có những field nhạy cảm tồn tại trong TEntity nhưng không tồn tại trong TResponse
+            var validFields = QueryHelper.GetValidFields<TResponse>(fields);
+            var validOrderBy = QueryHelper.GetValidOrderBy<TResponse>(orderBy);
+
+            var count = await query.CountAsync();
+
+            // 2. ProjectTo trước để chuyển từ Entity -> DTO
+            // Việc này giúp giấu các field nhạy cảm ngay từ đầu
+            // Thay vì query hết từ entity rồi mới chọn field, thì bây giờ chỉ query những field cần thiết đã được map sang DTO
+
+            // Tại sao lại cấn projectTo này --> Nếu không có ProjectTo, thì query sẽ trả về TEntity, sau đó mới chọn field động trên TEntity. Điều này sẽ gây ra lỗi nếu có field nào đó tồn tại trong TEntity nhưng không tồn tại trong TResponse.
+            var dtoQuery = query.ProjectTo<TResponse>(mapperConfig);
+
+            // 3. Sorting trên DTO
+            // orderBy sẽ được truyền vào dưới dạng string, ví dụ: "Name desc, Age asc"
+            // lib: System.Linq.Dynamic.Core sẽ parse string này và áp dụng sorting động trên DTO
+            if (!string.IsNullOrWhiteSpace(validOrderBy))
+                dtoQuery = dtoQuery.OrderBy(validOrderBy);
+
+            // 4. Paging
+            var pagedQuery = dtoQuery.Skip((pageIndex - 1) * pageSize).Take(pageSize);
+
+            // 5. Select Field động trên DTO
+            // Kết quả trả về List<object> (kiểu vô danh chứa các field của TResponse)
+            // Cái này cũng có mặt hại là không thẻ strong type được nữa, nhưng bù lại có thể linh hoạt chọn field nào cần thiết để trả về, tránh trả về data không cần thiết
+            // Và cũng khó khăn hơn trong việc sử dụng kết quả trả về, vì phải dùng dynamic để truy cập các field
+            var items = await pagedQuery
+                .Select($"new ({validFields})")
+                .ToDynamicListAsync();
+
+            return new BasePaginatedList<object>(items.Cast<object>().ToList(), count, pageIndex, pageSize);
+        }
+
+    }
+}
+public static class QueryHelper
+{
+    // Utils 1: Lọc chuỗi Fields để chỉ lấy các field có trong DTO và luôn ép có Id
+    public static string GetValidFields<TDto>(string? fields)
+    {
+        var allowedFields = typeof(TDto).GetProperties()
+            .Select(p => p.Name)
+            .ToList();
+
+        if (string.IsNullOrWhiteSpace(fields))
+            return string.Join(", ", allowedFields); // Trả về tất cả field của DTO nếu ko truyền
+
+        var requestedFields = fields.Split(',')
+            .Select(f => f.Trim())
+            .Where(f => allowedFields.Any(af => string.Equals(af, f, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        // Luôn đảm bảo có Id (nếu DTO có Id)
+        if (allowedFields.Contains("Id") && !requestedFields.Any(f => f.Equals("Id", StringComparison.OrdinalIgnoreCase)))
+            requestedFields.Insert(0, "Id");
+
+        return requestedFields.Any() ? string.Join(", ", requestedFields) : string.Join(", ", allowedFields);
+    }
+
+    // Utils 2: Kiểm tra chuỗi OrderBy có hợp lệ không
+    public static string? GetValidOrderBy<TDto>(string? orderBy)
+    {
+        if (string.IsNullOrWhiteSpace(orderBy)) return null;
+
+        var allowedFields = typeof(TDto).GetProperties().Select(p => p.Name).ToList();
+
+        // Tách chuỗi "Name DESC, Age ASC" -> "Name", "Age"
+        var parts = orderBy.Split(',')
+            .Select(p => p.Trim().Split(' ')[0])
+            .ToList();
+
+        // Nếu có bất kỳ field nào không nằm trong DTO -> Trả về null hoặc mặc định (để tránh lỗi crash)
+        bool isValid = parts.All(p => allowedFields.Any(af => string.Equals(af, p, StringComparison.OrdinalIgnoreCase)));
+
+        return isValid ? orderBy : null;
     }
 }

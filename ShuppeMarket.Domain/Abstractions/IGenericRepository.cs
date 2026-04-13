@@ -1,4 +1,6 @@
-﻿using System;
+﻿
+using AutoMapper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -22,6 +24,13 @@ namespace ShuppeMarket.Domain.Abstractions
         IQueryable<T> GetQueryable();
         Task DeleteRangeAsync(IEnumerable<T> entities);
 
-
+        Task<BasePaginatedList<object>> GetAllWithPaggingSortSelectionFieldAsync<TEntity, TResponse>(
+            IQueryable<TEntity> query,
+            IConfigurationProvider mapperConfig,
+            string? searchTerm = null,
+            string? orderBy = null,
+            string? fields = null,
+            int pageIndex = 1,
+            int pageSize = 10);
     }
 }

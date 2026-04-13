@@ -16,6 +16,6 @@ namespace ShuppeMarket.Application.Interfaces
         Task<BasePaginatedList<SellerResponse>> GetAllSellers(int pageIndex, int pageSize);
         Task<string> DeleteSellerAccount(string id);
         Task<SellerResponse> ApproveSellerAccount(string id);
-
+        Task<SellerResponse> GetSellerByAccountId(string accountId);
     }
 }

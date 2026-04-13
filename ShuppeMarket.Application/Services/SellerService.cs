@@ -61,12 +61,7 @@ namespace ShuppeMarket.Application.Services
 
                 //update account
 
-                var isUpdate = false;
-                if (!string.IsNullOrEmpty(sellerRequest.PhoneNumber) && user.PhoneNumber != sellerRequest.PhoneNumber)
-                {
-                    user.PhoneNumber = sellerRequest.PhoneNumber;
-                    isUpdate = true;
-                }
+                var isUpdate = false;               
                 if (!string.IsNullOrEmpty(sellerRequest.Address) && user.Address != sellerRequest.Address)
                 {
                     user.Address = sellerRequest.Address;
@@ -116,18 +111,19 @@ namespace ShuppeMarket.Application.Services
 
         public async Task<BasePaginatedList<SellerResponse>> GetAllSellers(int pageIndex, int pageSize)
         {
-            var sellersQuery = _unitOfWork.GetRepository<Seller>().Entity.Where(x => x.Account.Status == StatusEnum.Active).Include(x => x.Account);
+            var sellersQuery = _unitOfWork.GetRepository<Seller>().Entity;
+            sellersQuery = sellersQuery.Include(s => s.Account);
             var rs = await _unitOfWork.GetRepository<Seller>().GetPagging(sellersQuery, pageIndex, pageSize);
             return _mapper.Map<BasePaginatedList<SellerResponse>>(rs);
 
         }
 
-        public async Task<SellerResponse> ApproveSellerAccount(string id)
+        public async Task<SellerResponse> ApproveSellerAccount(string sellerId)
         {
-            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.Id == id, q => q.Include(x => x.Account));
+            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.Id == sellerId, q => q.Include(x => x.Account));
             if (seller == null)
             {
-                throw new KeyNotFoundException($"Seller with ID {id} not found.");
+                throw new KeyNotFoundException($"Seller with ID {sellerId} not found.");
             }
             var account = await _unitOfWork.GetRepository<Account>().GetByIdAsync(seller.AccountId);
             if (account == null)
@@ -160,6 +156,15 @@ namespace ShuppeMarket.Application.Services
             return "Seller account deleted successfully.";
         }
 
+        public async Task<SellerResponse> GetSellerByAccountId(string accountId)
+        {
+            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == accountId, q => q.Include(x => x.Account));
+            if (seller == null)
+            {
+                throw new KeyNotFoundException($"Seller with Account ID {accountId} not found.");
+            }
+            return _mapper.Map<SellerResponse>(seller);
+        }
         public async Task<SellerResponse> UpdateSellerAccount(SellerUpdateRequest sellerUpdateRequest)
         {
             await _validatorUpdate.ValidateAndThrowAsync(sellerUpdateRequest);
