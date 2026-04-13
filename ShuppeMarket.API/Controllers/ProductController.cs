@@ -39,10 +39,10 @@ namespace ShuppeMarket.API.Controllers
             Summary = "Get all products",
             Description = "Retrieve a paginated list of all products."
         )]
-        public async Task<IActionResult> GetAllProductsAsync([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAllProductsAsync([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] string? orderBy = null, [FromQuery] string? fields = null)
         {
-            var products = await _productService.GetAllProductsAsync(pageIndex, pageSize);
-            return Ok(ApiResponse<BasePaginatedList<ProductResponse>>.OkResponse(products, "Get products successful!", "200"));
+            var products = await _productService.GetAllProductsAsync(pageIndex, pageSize, searchTerm, orderBy, fields);
+            return Ok(ApiResponse<BasePaginatedList<object>>.OkResponse(products, "Get products successful!", "200"));
         }
 
         [HttpPost]

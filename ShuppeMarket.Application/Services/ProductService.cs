@@ -3,19 +3,13 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using ShuppeMarket.Application.DTOs.ProductDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 using ShuppeMarket.Domain.Enums;
 using ShuppeMarket.Domain.ResultError;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShuppeMarket.Application.Services
 {
@@ -110,11 +104,21 @@ namespace ShuppeMarket.Application.Services
 
         }
 
-        public async Task<BasePaginatedList<ProductResponse>> GetAllProductsAsync(int pageIndex, int pageSize)
+        public async Task<BasePaginatedList<object>> GetAllProductsAsync(int pageIndex = 1,
+            int pageSize = 10,
+            string? searchTerm = null,
+            string? orderBy = null,
+            string? fields = null)
         {
-            var query = _unitOfWork.GetRepository<Product>().Entity.Include(x => x.Seller).Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category);
-            var result = await _unitOfWork.GetRepository<Product>().GetPagging(query, pageIndex, pageSize);
-            return mapper.Map<BasePaginatedList<ProductResponse>>(result);
+            var query = _unitOfWork.GetRepository<Product>().Entity.Include(x => x.Seller).Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category).AsQueryable() ;
+            query = query.Where(x => x.Status == StatusEnum.Active);
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                query = query.OrderByDescending(x => x.CreateAt);
+            }
+            var map = mapper.ConfigurationProvider;
+            var result = await _unitOfWork.GetRepository<Product>().GetAllWithPaggingSortSelectionFieldAsync<Product, ProductResponse>(query, map, searchTerm, orderBy, fields, pageIndex, pageSize);
+            return result;
         }
 
         public async Task<Result<ProductResponse>> GetProductByIdAsync(string productId)

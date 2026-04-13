@@ -70,10 +70,18 @@ namespace ShuppeMarket.API.Controllers
         [Authorize]
         [HttpPut]
         [SwaggerOperation(Summary = "Update seller account by ID"), Description("Update Seller account by ID")]
-        public async Task<IActionResult> UpdateSellerAccount( [FromBody] SellerUpdateRequest sellerUpdateRequest)
+        public async Task<IActionResult> UpdateSellerAccount([FromBody] SellerUpdateRequest sellerUpdateRequest)
         {
-            var sellerResponse = await sellerService.UpdateSellerAccount( sellerUpdateRequest);
+            var sellerResponse = await sellerService.UpdateSellerAccount(sellerUpdateRequest);
             return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Update seller account successful!", "200"));
+        }
+        [Authorize]
+        [HttpGet("account/{accountId}")]
+        [SwaggerOperation(Summary = "Get seller by account ID"), Description("Get Seller by account ID")]
+        public async Task<IActionResult> GetSellerByAccountId(string accountId)
+        {
+            var sellerResponse = await sellerService.GetSellerByAccountId(accountId);
+            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Get seller by account ID successful!", "200"));
         }
     }
 }

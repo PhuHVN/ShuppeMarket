@@ -37,6 +37,13 @@ namespace ShuppeMarket.API.Middleware
 
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
+            // If response has already started, we can't modify headers
+            if (context.Response.HasStarted)
+            {
+                logger.LogError("Response has already started. Cannot write error response.");
+                return;
+            }
+
             context.Response.ContentType = "application/json";
             var statusCode = exception switch
             {

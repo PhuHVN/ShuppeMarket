@@ -14,7 +14,11 @@ namespace ShuppeMarket.Application.Interfaces
         Task<ProductResponse> CreateProductAsync( ProductRequest request);
         Task<ProductResponse> UpdateProductAsync(string id, ProductUpdateRequest request);
         Task<string> DeleteProductAsync(string productId);
-        Task<BasePaginatedList<ProductResponse>> GetAllProductsAsync(int pageIndex, int pageSize);
+        Task<BasePaginatedList<object>> GetAllProductsAsync(int pageIndex = 1,
+             int pageSize = 10,
+             string? searchTerm = null,
+             string? orderBy = null,
+             string? fields = null);
         Task<Result<ProductResponse>> GetProductByIdAsync(string productId);
     }
 }

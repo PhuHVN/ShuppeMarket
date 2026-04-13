@@ -156,6 +156,15 @@ namespace ShuppeMarket.Application.Services
             return "Seller account deleted successfully.";
         }
 
+        public async Task<SellerResponse> GetSellerByAccountId(string accountId)
+        {
+            var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == accountId, q => q.Include(x => x.Account));
+            if (seller == null)
+            {
+                throw new KeyNotFoundException($"Seller with Account ID {accountId} not found.");
+            }
+            return _mapper.Map<SellerResponse>(seller);
+        }
         public async Task<SellerResponse> UpdateSellerAccount(SellerUpdateRequest sellerUpdateRequest)
         {
             await _validatorUpdate.ValidateAndThrowAsync(sellerUpdateRequest);
