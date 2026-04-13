@@ -4,8 +4,10 @@ using ShuppeMarket.Domain.ResultError;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static Google.Apis.Requests.BatchRequest;
 
 namespace ShuppeMarket.Application.Interfaces
 {
@@ -19,6 +21,7 @@ namespace ShuppeMarket.Application.Interfaces
              string? searchTerm = null,
              string? orderBy = null,
              string? fields = null);
+       
         Task<Result<ProductResponse>> GetProductByIdAsync(string productId);
     }
 }

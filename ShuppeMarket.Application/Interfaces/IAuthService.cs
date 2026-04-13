@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using ShuppeMarket.Application.DTOs.AccountDtos;
 using ShuppeMarket.Application.DTOs.LoginDtos;
+using ShuppeMarket.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,5 +18,6 @@ namespace ShuppeMarket.Application.Interfaces
         Task<string> RegisterAsync(AccountRequest request);
         Task<AccountResponse> CurrentUser();
         Task<string> VerifyOtp(string email,string otp);
+        Task<Account> GetCurrentUserLoginAsync();
     }
 }
