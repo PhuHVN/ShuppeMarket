@@ -23,5 +23,7 @@ namespace ShuppeMarket.Domain.Entities
         public DateTime? LastUpdatedAt { get; set; }
         public RoleEnum Role { get; set; } 
         public StatusEnum Status { get; set; } = StatusEnum.Active;
+        // Navigation properties
+        public ICollection<Cart> Carts { get; set; } = new List<Cart>();
     }
 }

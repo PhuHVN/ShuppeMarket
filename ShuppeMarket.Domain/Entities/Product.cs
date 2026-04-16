@@ -23,6 +23,8 @@ namespace ShuppeMarket.Domain.Entities
         public StatusEnum Status { get; set; }
         // Navigation property
         public ICollection<CategoryProduct> CategoryProducts { get; set; } = new List<CategoryProduct>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public ICollection<CartDetail> CartDetails { get; set; } = new List<CartDetail>();
         // Seller relationship
         public string SellerId { get; set; } = string.Empty;
         public Seller Seller { get; private set; } = null!;

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
@@ -11,9 +12,11 @@ using ShuppeMarket.Infrastructure.DatabaseSettings;
 namespace ShuppeMarket.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260414152347_AddCartTable")]
+    partial class AddCartTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -75,9 +78,6 @@ namespace ShuppeMarket.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreateAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -269,7 +269,7 @@ namespace ShuppeMarket.Infrastructure.Migrations
             modelBuilder.Entity("ShuppeMarket.Domain.Entities.CartDetail", b =>
                 {
                     b.HasOne("ShuppeMarket.Domain.Entities.Cart", "Cart")
-                        .WithMany("CartDetails")
+                        .WithMany()
                         .HasForeignKey("CartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -348,11 +348,6 @@ namespace ShuppeMarket.Infrastructure.Migrations
             modelBuilder.Entity("ShuppeMarket.Domain.Entities.Account", b =>
                 {
                     b.Navigation("Carts");
-                });
-
-            modelBuilder.Entity("ShuppeMarket.Domain.Entities.Cart", b =>
-                {
-                    b.Navigation("CartDetails");
                 });
 
             modelBuilder.Entity("ShuppeMarket.Domain.Entities.Category", b =>

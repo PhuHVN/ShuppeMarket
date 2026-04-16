@@ -36,7 +36,7 @@ namespace ShuppeMarket.Application.Services
             {
                 throw new Exception("User not found");
             }
-            var product = await _unitOfWork.GetRepository<Product>().FindAsync(x => x.Id ==  productId);
+            var product = await _unitOfWork.GetRepository<Product>().FindAsync(x => x.Id == productId);
             if (product == null)
             {
                 throw new Exception("Product not found");
@@ -75,7 +75,7 @@ namespace ShuppeMarket.Application.Services
             }
             var mapp = _mapper.ConfigurationProvider;
             var fieldsToSearch = new[] { "Comment" };
-            var result = await _unitOfWork.GetRepository<Review>().GetAllWithPaggingSortSelectionFieldAsync<Review,ReviewResponse>(query,mapp,searchTerm, fieldsToSearch, orderBy, fields, pageIndex, pageSize);
+            var result = await _unitOfWork.GetRepository<Review>().GetAllWithPaggingSortSelectionFieldAsync<Review, ReviewResponse>(query, mapp, searchTerm, fieldsToSearch, orderBy, fields, pageIndex, pageSize);
             return result;
         }
         public async Task<BasePaginatedList<object>> GetAllReviewsByProductId(string productId, int pageIndex = 1, int pageSize = 10, string? searchTerm = null, string? orderBy = null, string? fields = null)
@@ -90,6 +90,7 @@ namespace ShuppeMarket.Application.Services
             var result = await _unitOfWork.GetRepository<Review>().GetAllWithPaggingSortSelectionFieldAsync<Review, ReviewResponse>(query, mapp, searchTerm, fieldsToSearch, orderBy, fields, pageIndex, pageSize);
             return result;
         }
+
         public async Task<ReviewResponse> GetReviewById(string id)
         {
             var review = await _unitOfWork.GetRepository<Review>().FindAsync(x => x.Id == id, include: x => x.Include(x => x.Account).Include(x => x.Product));
@@ -97,7 +98,22 @@ namespace ShuppeMarket.Application.Services
             {
                 throw new Exception("Review not found");
             }
-            return _mapper.Map<ReviewResponse>(review); 
+            return _mapper.Map<ReviewResponse>(review);
+        }
+
+        public async Task<double> OverallStarsByProductId(string productId)
+        {
+            var reviews = await _unitOfWork.GetRepository<Review>().Entity
+                .Where(x => x.ProductId == productId)
+                .ToListAsync();
+
+            if (reviews == null || reviews.Count == 0)
+            {
+                return 0;
+            }
+
+            var averageStars = reviews.Average(x => x.Rating);
+            return averageStars;
         }
 
         public Task<ReviewResponse> UpdateReview(string id, ReviewRequest request)
