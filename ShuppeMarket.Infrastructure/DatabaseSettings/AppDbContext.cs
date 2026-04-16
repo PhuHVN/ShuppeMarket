@@ -17,7 +17,8 @@ namespace ShuppeMarket.Infrastructure.DatabaseSettings
         public DbSet<Seller> Sellers { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Review> Reviews { get; set; }
-
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartDetail> CartDetails { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -29,6 +30,11 @@ namespace ShuppeMarket.Infrastructure.DatabaseSettings
                 entity.Property(e => e.Price).HasPrecision(18, 2);
 
             });
+
+            modelBuilder.Entity<CartDetail>()
+                .HasIndex(x => new { x.CartId, x.ProductId })
+                .IsUnique();
+
             modelBuilder.Entity<Product>()
                  .HasOne(p => p.Seller)
                  .WithMany(s => s.Products)

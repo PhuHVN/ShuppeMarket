@@ -42,9 +42,9 @@ namespace ShuppeMarket.API.Controllers
             return Ok(ApiResponse<ReviewResponse>.OkResponse(review, "Get successfully", "200"));
         }
         [HttpPost("product/{productId}")]
-        public async Task<IActionResult> CreateReview(string productId,[FromBody] ReviewRequest request)
+        public async Task<IActionResult> CreateReview(string productId, [FromBody] ReviewRequest request)
         {
-            var review = await reviewService.CreateReview(productId,request);
+            var review = await reviewService.CreateReview(productId, request);
             return Ok(ApiResponse<ReviewResponse>.OkResponse(review, "Created successfully", "200"));
         }
         [HttpPut("{id}")]
@@ -62,6 +62,12 @@ namespace ShuppeMarket.API.Controllers
         {
             var review = await reviewService.DeleteReview(id);
             return NoContent();
+        }
+        [HttpGet("product/{productId}/overall-stars")]
+        public async Task<IActionResult> GetOverallStarsByProductId(string productId)
+        {
+            var overallStars = await reviewService.OverallStarsByProductId(productId);
+            return Ok(ApiResponse<double>.OkResponse(overallStars, "Get overall stars successfully", "200"));
         }
     }
 }
