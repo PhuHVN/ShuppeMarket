@@ -1,21 +1,17 @@
 ﻿using ShuppeMarket.Application.DTOs.SellerDtos;
 using ShuppeMarket.Domain.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ShuppeMarket.Domain.ResultError;
 
 namespace ShuppeMarket.Application.Interfaces
 {
     public interface ISellerService
     {
-        Task<SellerResponse> RegisterSellerAccount(string accountId, SellerRequest sellerRequest);
-        Task<SellerResponse> GetSellerById(string id);
-        Task<SellerResponse> UpdateSellerAccount(SellerUpdateRequest sellerUpdateRequest);
-        Task<BasePaginatedList<SellerResponse>> GetAllSellers(int pageIndex, int pageSize);
-        Task<string> DeleteSellerAccount(string id);
-        Task<SellerResponse> ApproveSellerAccount(string id);
-        Task<SellerResponse> GetSellerByAccountId(string accountId);
+        Task<Result<SellerResponse>> RegisterSellerAccount(string accountId, SellerRequest sellerRequest);
+        Task<Result<SellerResponse>> GetSellerById(string id);
+        Task<Result<SellerResponse>> UpdateSellerAccount(SellerUpdateRequest sellerUpdateRequest);
+        Task<Result<BasePaginatedList<SellerResponse>>> GetAllSellers(int pageIndex, int pageSize);
+        Task<Result<string>> DeleteSellerAccount(string id);
+        Task<Result<SellerResponse>> ApproveSellerAccount(string id);
+        Task<Result<SellerResponse>> GetSellerByAccountId(string accountId);
     }
 }

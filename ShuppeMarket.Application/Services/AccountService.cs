@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using BCrypt.Net;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -8,12 +7,8 @@ using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 using ShuppeMarket.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using ShuppeMarket.Domain.ResultError;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShuppeMarket.Application.Services
 {
@@ -37,7 +32,7 @@ namespace ShuppeMarket.Application.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<AccountResponse> CreateAccount(AccountRequest request)
+        public async Task<Result<AccountResponse>> CreateAccount(AccountRequest request)
         {
             //validate request
             await _validator.ValidateAndThrowAsync(request);
@@ -63,78 +58,80 @@ namespace ShuppeMarket.Application.Services
             await _unitOfWork.GetRepository<Account>().InsertAsync(account);
             await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Account created with email: {Email}", account.Email);
-            return _mapper.Map<AccountResponse>(account);
+            var rs = _mapper.Map<AccountResponse>(account);
+            return Result<AccountResponse>.Success(rs);
         }
 
-        public async Task DeleteAccount(string id)
+        public async Task<Result<string>> DeleteAccount(string id)
         {
             var account = await _unitOfWork.GetRepository<Account>().GetByIdAsync(id);
             if (account == null)
             {
-                throw new KeyNotFoundException("Account not found.");
+                return Result<string>.Fail(Error.NotFound);
             }
             account.Status = StatusEnum.Inactive;
             await _unitOfWork.GetRepository<Account>().UpdateAsync(account);
             await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Account with id: {Id} has been deactivated.", id);
+            return Result<string>.Success("Account deactivated successfully.");
         }
 
-        public async Task<AccountResponse> GetAccountById(string id)
-        {            
+        public async Task<Result<AccountResponse>> GetAccountById(string id)
+        {
             var account = await _unitOfWork.GetRepository<Account>().GetByIdAsync(id);
             if (account == null)
             {
-                throw new KeyNotFoundException("Account not found.");
+                return Result<AccountResponse>.Fail(Error.NotFound);
             }
-            return _mapper.Map<AccountResponse>(account);
+            return Result<AccountResponse>.Success(_mapper.Map<AccountResponse>(account));
         }
 
-        public async Task<BasePaginatedList<AccountResponse>> GetAllAccounts(int pageIndex, int pageSize)
+        public async Task<Result<BasePaginatedList<AccountResponse>>> GetAllAccounts(int pageIndex, int pageSize)
         {
             var query = _unitOfWork.GetRepository<Account>().Entity.Where(x => x.Status == StatusEnum.Active);
             var rs = await _unitOfWork.GetRepository<Account>().GetPagging(query, pageIndex, pageSize);
-            return _mapper.Map<BasePaginatedList<AccountResponse>>(rs);
+            return Result<BasePaginatedList<AccountResponse>>.Success(_mapper.Map<BasePaginatedList<AccountResponse>>(rs));
         }
 
-        public async Task<AccountResponse> UpdateAccount(AccountUpdateRequest request)
+        public async Task<Result<AccountResponse>> UpdateAccount(AccountUpdateRequest request)
         {
-            if(request == null)
+            if (request == null)
             {
-                throw new ArgumentNullException(nameof(request), "Invalid request.");
+                return Result<AccountResponse>.Fail(Error.Invalid);
             }
             await _updateValidator.ValidateAndThrowAsync(request);
             //
             var accountId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(accountId))
             {
-                throw new UnauthorizedAccessException("Unauthorized to update this account.");
+                return Result<AccountResponse>.Fail(Error.Unauthorized);
             }
             var accountExist = await _unitOfWork.GetRepository<Account>().GetByIdAsync(accountId);
             if (accountExist == null)
             {
-                throw new KeyNotFoundException("Account not found.");
+                return Result<AccountResponse>.Fail(Error.NotFound);
             }
-            if(accountExist.Status == StatusEnum.Inactive)
+            if (accountExist.Status == StatusEnum.Inactive)
             {
-                throw new InvalidOperationException("Cannot update an inactive account.");
+                return Result<AccountResponse>.Fail(Error.Invalid);
             }
             var isUpdate = false;
-            if(!string.IsNullOrEmpty(request.FullName) && request.FullName != accountExist.FullName)
+            if (!string.IsNullOrEmpty(request.FullName) && request.FullName != accountExist.FullName)
             {
                 accountExist.FullName = request.FullName;
                 isUpdate = true;
             }
-            if(!string.IsNullOrEmpty(request.Address) && request.Address != accountExist.Address)
+            if (!string.IsNullOrEmpty(request.Address) && request.Address != accountExist.Address)
             {
                 accountExist.Address = request.Address;
                 isUpdate = true;
             }
-            if(!string.IsNullOrEmpty(request.PhoneNumber) && request.PhoneNumber != accountExist.PhoneNumber)
+            if (!string.IsNullOrEmpty(request.PhoneNumber) && request.PhoneNumber != accountExist.PhoneNumber)
             {
                 accountExist.PhoneNumber = request.PhoneNumber;
                 isUpdate = true;
             }
-            if(isUpdate)
+            if (isUpdate)
             {
                 try
                 {
@@ -144,15 +141,17 @@ namespace ShuppeMarket.Application.Services
                     await _unitOfWork.SaveChangesAsync();
                     await _unitOfWork.CommitTransactionAsync();
                     _logger.LogInformation("Account with id: {Id} has been updated.", accountExist.Id);
-                }catch(Exception ex)
+                    return Result<AccountResponse>.Success(_mapper.Map<AccountResponse>(accountExist));
+                }
+                catch (Exception ex)
                 {
                     await _unitOfWork.RollBackAsync();
                     _logger.LogError(ex, "Error updating account with id: {Id}", accountExist.Id);
                     throw new ApplicationException("An error occurred while updating the account.");
                 }
-               
+
             }
-            return _mapper.Map<AccountResponse>(accountExist);
-        }    
+            return Result<AccountResponse>.Fail(Error.Invalid);
+        }
     }
 }

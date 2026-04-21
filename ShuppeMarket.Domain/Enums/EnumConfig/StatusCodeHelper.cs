@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-
-namespace MuseumSystem.Domain.Enums.EnumConfig
-{ 
+﻿namespace ShuppeMarket.Domain.Enums.EnumConfig
+{
 
     public enum StatusCodeHelper
     {

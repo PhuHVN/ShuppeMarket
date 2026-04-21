@@ -1,15 +1,10 @@
 ﻿
 using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShuppeMarket.Domain.Abstractions
 {
-    public interface IGenericRepository <T> where T : class
+    public interface IGenericRepository<T> where T : class
     {
         IQueryable<T> Entity { get; }
         Task<T?> FindByConditionAsync(Expression<Func<T, bool>> predicate);

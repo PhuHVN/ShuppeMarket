@@ -1,25 +1,21 @@
 using AutoMapper;
 using CloudinaryDotNet;
-using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
-using MuseumSystem.Application.Dtos;
-using MuseumSystem.Application.Validation;
-using MuseumSystem.Domain.Enums.EnumConfig;
-using MuseumSystem.Infrastructure.Seed;
 using ShuppeMarket.API;
 using ShuppeMarket.API.Middleware;
+using ShuppeMarket.Application.DTOs;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Application.Services;
+using ShuppeMarket.Application.Validation;
+using ShuppeMarket.Domain.Enums.EnumConfig;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
+using ShuppeMarket.Infrastructure.Seed;
 using StackExchange.Redis;
 using System.Security.Claims;
 using System.Text.Json;
-using static System.Net.WebRequestMethods;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -204,13 +200,15 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
 
     var options = new ConfigurationOptions
     {
-        EndPoints = { { host!, int.Parse(port) } },
+        EndPoints = { $"{host}:{port}" },
         Password = password,
         Ssl = true,
+        SslHost = host,
         AbortOnConnectFail = false,
-        ConnectTimeout = 10000, 
+        ConnectTimeout = 10000,
         SyncTimeout = 10000,
-        KeepAlive = 30
+        KeepAlive = 30,
+        ConnectRetry = 5
     };
 
     return ConnectionMultiplexer.Connect(options);

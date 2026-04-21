@@ -1,21 +1,15 @@
 ﻿using AutoMapper;
-using BCrypt.Net;
 using FluentValidation;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Http;
 using ShuppeMarket.Application.DTOs.AccountDtos;
-using ShuppeMarket.Application.DTOs.LoginDtos;
+using ShuppeMarket.Application.DTOs.AuthDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 using ShuppeMarket.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using ShuppeMarket.Domain.ResultError;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
 
 namespace ShuppeMarket.Application.Services
 {
@@ -29,7 +23,7 @@ namespace ShuppeMarket.Application.Services
         private readonly IValidator<AccountRequest> _registerValidator;
         private readonly IEmailService _emailService;
         private readonly IOtpCacheService _otpCacheService;
-        
+
 
         public AuthService(IUnitOfWork unitOfWork, IGenerateTokenService generateTokenService, IValidator<LoginRequest> validator, IHttpContextAccessor httpContextAccessor, IMapper mapper, IValidator<AccountRequest> registerValidator, IEmailService emailService, IOtpCacheService otpCacheService)
         {
@@ -42,7 +36,7 @@ namespace ShuppeMarket.Application.Services
             _emailService = emailService;
             _otpCacheService = otpCacheService;
         }
-        public async Task<AuthResponse> LoginAsync(LoginRequest request)
+        public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request)
         {
             await _validator.ValidateAndThrowAsync(request);
             //
@@ -50,24 +44,24 @@ namespace ShuppeMarket.Application.Services
                 .FindAsync(x => x.Email == request.Email && x.Status != StatusEnum.Inactive);
             if (user == null)
             {
-                throw new UnauthorizedAccessException("Invalid email or password.");
+                return Result<AuthResponse>.Fail("UNAUTHORIZED", "Invalid email or password.");
             }
             //verify passwordv
             var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
             if (!isPasswordValid)
             {
-                throw new UnauthorizedAccessException("Invalid email or password.");
+                return Result<AuthResponse>.Fail("UNAUTHORIZED", "Invalid email or password.");
             }
 
             var token = _generateTokenService.GenerateToken(user);
-            return new AuthResponse
+            var authResponse = new AuthResponse
             {
                 Token = token.ToString()
             };
-
+            return Result<AuthResponse>.Success(authResponse);
         }
 
-        public async Task<AuthResponse> LoginGoogleAsync(LoginGoogleRequest request)
+        public async Task<Result<AuthResponse>> LoginGoogleAsync(LoginGoogleRequest request)
         {
             try
             {
@@ -93,10 +87,11 @@ namespace ShuppeMarket.Application.Services
                     user = newUser;
                 }
                 var token = _generateTokenService.GenerateToken(user);
-                return new AuthResponse
+                var authResponse = new AuthResponse
                 {
                     Token = token
                 };
+                return Result<AuthResponse>.Success(authResponse);
             }
             catch (InvalidJwtException)
             {
@@ -108,24 +103,24 @@ namespace ShuppeMarket.Application.Services
             }
         }
 
-        public async Task<AccountResponse> CurrentUser()
+        public async Task<Result<AccountResponse>> CurrentUser()
         {
             var context = _httpContextAccessor.HttpContext;
             var userId = context?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
             {
-                throw new UnauthorizedAccessException("User not authenticated.");
+                return Result<AccountResponse>.Fail(Error.Unauthorized);
             }
             var user = await _unitOfWork.GetRepository<Account>().GetByIdAsync(userId);
             if (user == null)
             {
-                throw new UnauthorizedAccessException("User not found.");
+                return Result<AccountResponse>.Fail(Error.NotFound);
             }
-            return _mapper.Map<AccountResponse>(user);
+            return Result<AccountResponse>.Success(_mapper.Map<AccountResponse>(user));
 
         }
 
-        public async Task<string> RegisterAsync(AccountRequest request)
+        public async Task<Result<string>> RegisterAsync(AccountRequest request)
         {
             await _registerValidator.ValidateAndThrowAsync(request);
 
@@ -135,15 +130,15 @@ namespace ShuppeMarket.Application.Services
             {
                 if (existingUser.Status == StatusEnum.Active)
                 {
-                    throw new Exception("Email is already registered.");
+                    return Result<string>.Fail("CONFLICT", "Email is already registered.");
                 }
                 else if (existingUser.Status == StatusEnum.Inactive)
                 {
                     //resend OTP
                     var otp1 = _otpCacheService.GenerateOTP();
                     await _otpCacheService.StoreOtpAsync(existingUser.Email, otp1, TimeSpan.FromMinutes(10));
-                    await _emailService.SendEmailAsync(existingUser.Email, "Verify your account", $"Your OTP code is: {otp1}");
-                    return "Account exists but not verified. OTP resent.";
+                    await _emailService.SendCodeOtpEmailAsync(existingUser.Email, otp1);
+                    return Result<string>.Fail("INVALID", "Account exists but not verified. OTP resent.");
                 }
 
             }
@@ -164,53 +159,53 @@ namespace ShuppeMarket.Application.Services
             // Send OTP email for verification
             var otp = _otpCacheService.GenerateOTP();
             await _otpCacheService.StoreOtpAsync(newUser.Email, otp, TimeSpan.FromMinutes(10));
-            await _emailService.SendEmailAsync(newUser.Email, "Verify your account", $"Your OTP code is: {otp}");
+            await _emailService.SendCodeOtpEmailAsync(newUser.Email, otp);
 
-            return "Registration successful. Please check your email for the OTP to verify your account.";
+            return Result<string>.Success("Registration successful. Please check your email for the OTP to verify your account.");
 
         }
-        public async Task<Account> GetCurrentUserLoginAsync()
+        public async Task<Result<Account>> GetCurrentUserLoginAsync()
         {
             var context = _httpContextAccessor.HttpContext;
             var userId = context?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
             {
-                throw new UnauthorizedAccessException("User not authenticated.");
+                return Result<Account>.Fail("UNAUTHORIZED", "User not authenticated.");
             }
             var user = await _unitOfWork.GetRepository<Account>().FindAsync(x => x.Id == userId && x.Status == StatusEnum.Active);
             if (user == null)
             {
-                throw new UnauthorizedAccessException("User not found.");
+                return Result<Account>.Fail("UNAUTHORIZED", "User not found.");
             }
-            return user;
+            return Result<Account>.Success(user);
         }
 
-        public async Task<string> VerifyOtp(string email, string otp)
+        public async Task<Result<string>> VerifyOtp(string email, string otp)
         {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otp))
             {
-                throw new ArgumentException("Email and OTP must be provided.");
+                return Result<string>.Fail("INVALID", "Email and OTP must be provided.");
             }
             var cachedOtp = await _otpCacheService.RetrieveOtpAsync(email);
-            if (cachedOtp == null)
+            if (!cachedOtp.IsSuccess)
             {
-                throw new ArgumentException("Invalid or expired OTP.");
+                return Result<string>.Fail("INVALID", "Invalid or expired OTP.");
             }
-            if (cachedOtp != otp)
+            if (cachedOtp.Value != otp)
             {
-                throw new ArgumentException("Invalid OTP.");
+                return Result<string>.Fail("INVALID", "Invalid OTP.");
             }
             await _otpCacheService.RemoveOtpAsync(email);
             var user = await _unitOfWork.GetRepository<Account>()
                 .FindAsync(x => x.Email == email && x.Status == StatusEnum.Inactive);
             if (user == null)
             {
-                throw new ArgumentException("User not found or already verified.");
+                return Result<string>.Fail("INVALID", "User not found or already verified.");
             }
             user.Status = StatusEnum.Active;
             await _unitOfWork.GetRepository<Account>().UpdateAsync(user);
             await _unitOfWork.SaveChangesAsync();
-            return "OTP verified successfully.";
+            return Result<string>.Success("OTP verified successfully.");
         }
     }
 }

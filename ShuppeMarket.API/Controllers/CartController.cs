@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using MuseumSystem.Application.Dtos;
+﻿using Microsoft.AspNetCore.Mvc;
+using ShuppeMarket.Application.DTOs;
 using ShuppeMarket.Application.DTOs.Cart;
 using ShuppeMarket.Application.Interfaces;
 
@@ -38,7 +37,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetCart()
         {
             var cart = await _cartService.GetCartAsyncByUserLogin();
-            return Ok(ApiResponse<CartResponse>.OkResponse(cart, "Get cart successfully", "200"));
+            return Ok(ApiResponse<CartResponse>.OkResponse(cart.Value, "Get cart successfully", "200"));
         }
     }
 }

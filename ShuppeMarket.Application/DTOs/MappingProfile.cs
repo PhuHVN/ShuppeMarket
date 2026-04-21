@@ -6,7 +6,7 @@ using ShuppeMarket.Application.DTOs.SellerDtos;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 
-namespace MuseumSystem.Application.Dtos
+namespace ShuppeMarket.Application.DTOs
 {
     public class MappingProfile : Profile
     {

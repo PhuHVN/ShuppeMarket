@@ -1,11 +1,7 @@
 ﻿using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ShuppeMarket.Domain.ResultError;
 
 namespace ShuppeMarket.Application.Services
 {
@@ -16,16 +12,16 @@ namespace ShuppeMarket.Application.Services
         {
             _unitOfWork = unitOfWork;
         }
-        public async Task<Category> CreateCategoryAsync(string name)
+        public async Task<Result<Category>> CreateCategoryAsync(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException("Category name cannot be null or empty", nameof(name));
+                return Result<Category>.Fail("INVALID", "Category name cannot be null or empty");
             }
             var ExistingCategory = await _unitOfWork.GetRepository<Category>().FindAsync(c => c.Name.ToLower() == name.ToLower());
             if (ExistingCategory != null)
             {
-                throw new ArgumentException("Category with the same name already exists", nameof(name));
+                return Result<Category>.Fail("DUPLICATE", "Category with the same name already exists");
             }
             var category = new Category
             {
@@ -35,53 +31,54 @@ namespace ShuppeMarket.Application.Services
             };
             await _unitOfWork.GetRepository<Category>().InsertAsync(category);
             await _unitOfWork.SaveChangesAsync();
-            return category;
+            return Result<Category>.Success(category);
         }
 
-        public async Task<string> DeleteCategoryAsync(string id)
+        public async Task<Result<string>> DeleteCategoryAsync(string id)
         {
             var category = await _unitOfWork.GetRepository<Category>().GetByIdAsync(id);
             if (category == null)
             {
-                throw new ArgumentException("Category not found", nameof(id));
+                return Result<string>.Fail("NOT_FOUND", "Category not found");
             }
             category.Status = Domain.Enums.StatusEnum.Inactive;
             await _unitOfWork.GetRepository<Category>().UpdateAsync(category);
-            return "Category deleted successfully";
+            await _unitOfWork.SaveChangesAsync();
+            return Result<string>.Success("Category deleted successfully");
         }
 
-        public async Task<BasePaginatedList<Category>> GetAllCategoriesAsync(int pageIndex, int pageSize )
+        public async Task<Result<BasePaginatedList<Category>>> GetAllCategoriesAsync(int pageIndex, int pageSize)
         {
             var query = _unitOfWork.GetRepository<Category>().Entity.Where(x => x.Status == Domain.Enums.StatusEnum.Active);
-            var rs =await _unitOfWork.GetRepository<Category>().GetPagging(query, pageIndex, pageSize);
-            return rs;
+            var rs = await _unitOfWork.GetRepository<Category>().GetPagging(query, pageIndex, pageSize);
+            return Result<BasePaginatedList<Category>>.Success(rs);
         }
 
-        public async Task<Category> GetCategoryByIdAsync(string id)
+        public async Task<Result<Category>> GetCategoryByIdAsync(string id)
         {
             var category = await _unitOfWork.GetRepository<Category>().GetByIdAsync(id);
             if (category == null)
             {
-                throw new KeyNotFoundException("Category not found");
+                return Result<Category>.Fail("NOT_FOUND", "Category not found");
             }
-            return category;
+            return Result<Category>.Success(category);
         }
 
-        public async Task<Category> UpdateCategoryAsync(string id, string name)
+        public async Task<Result<Category>> UpdateCategoryAsync(string id, string name)
         {
-            if(string.IsNullOrWhiteSpace(name))
+            if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException("Category name cannot be null or empty", nameof(name));
+                return Result<Category>.Fail("INVALID", "Category name cannot be null or empty");
             }
             var categoryTask = await _unitOfWork.GetRepository<Category>().GetByIdAsync(id);
-            if(categoryTask == null)
+            if (categoryTask == null)
             {
-                throw new ArgumentException("Category not found", nameof(id));
+                return Result<Category>.Fail("NOT_FOUND", "Category not found");
             }
-           if(categoryTask.Name.ToLower() != name.ToLower())
+            if (categoryTask.Name.ToLower() != name.ToLower())
             {
                 var existingCategory = await _unitOfWork.GetRepository<Category>().FindAsync(c => c.Name.ToLower() == name.ToLower());
-                if(existingCategory != null)
+                if (existingCategory != null)
                 {
                     throw new ArgumentException("Category with the same name already exists", nameof(name));
                 }
@@ -89,7 +86,7 @@ namespace ShuppeMarket.Application.Services
             categoryTask.Name = name;
             await _unitOfWork.GetRepository<Category>().UpdateAsync(categoryTask);
             await _unitOfWork.SaveChangesAsync();
-            return  categoryTask;
+            return Result<Category>.Success(categoryTask);
         }
     }
 }
