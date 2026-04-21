@@ -1,11 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShuppeMarket.Infrastructure.Implemention
 {
@@ -68,7 +63,7 @@ namespace ShuppeMarket.Infrastructure.Implemention
         public bool HasActiveTransaction()
         {
             return _transaction != null;
-            
+
         }
 
         public async Task RollBackAsync()

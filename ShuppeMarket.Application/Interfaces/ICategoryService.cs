@@ -1,19 +1,15 @@
 ﻿using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ShuppeMarket.Domain.ResultError;
 
 namespace ShuppeMarket.Application.Interfaces
 {
     public interface ICategoryService
     {
-        Task<Category> CreateCategoryAsync(string name);
-        Task<BasePaginatedList<Category>> GetAllCategoriesAsync(int pageIndex, int pageSize);
-        Task<Category> GetCategoryByIdAsync(string id);
-        Task<Category> UpdateCategoryAsync(string id, string name);
-        Task<string> DeleteCategoryAsync(string id);
+        Task<Result<Category>> CreateCategoryAsync(string name);
+        Task<Result<BasePaginatedList<Category>>> GetAllCategoriesAsync(int pageIndex, int pageSize);
+        Task<Result<Category>> GetCategoryByIdAsync(string id);
+        Task<Result<Category>> UpdateCategoryAsync(string id, string name);
+        Task<Result<string>> DeleteCategoryAsync(string id);
     }
 }

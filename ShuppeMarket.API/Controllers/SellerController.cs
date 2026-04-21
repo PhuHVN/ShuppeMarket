@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MuseumSystem.Application.Dtos;
+using ShuppeMarket.Application.DTOs;
 using ShuppeMarket.Application.DTOs.SellerDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
@@ -26,7 +26,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> RegisterSellerAccount(string accountId, [FromBody] SellerRequest sellerRequest)
         {
             var sellerResponse = await sellerService.RegisterSellerAccount(accountId, sellerRequest);
-            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Register seller account successful!", "201"));
+            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse.Value, "Register seller account successful!", "201"));
         }
 
         [Authorize]
@@ -35,7 +35,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetSellerById(string id)
         {
             var sellerResponse = await sellerService.GetSellerById(id);
-            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Get seller by ID successful!", "200"));
+            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse.Value, "Get seller by ID successful!", "200"));
 
         }
 
@@ -45,7 +45,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetAllSellers(int pageIndex = 1, int pageSize = 10)
         {
             var sellers = await sellerService.GetAllSellers(pageIndex, pageSize);
-            return Ok(ApiResponse<BasePaginatedList<SellerResponse>>.OkResponse(sellers, "Get all sellers successful!", "200"));
+            return Ok(ApiResponse<BasePaginatedList<SellerResponse>>.OkResponse(sellers.Value, "Get all sellers successful!", "200"));
         }
 
         [Authorize(Roles = Roles.Admin)]
@@ -54,7 +54,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> DeleteSellerAccount(string id)
         {
             var result = await sellerService.DeleteSellerAccount(id);
-            return Ok(ApiResponse<string>.OkResponse(result, "Delete seller account successful!", "200"));
+            return Ok(ApiResponse<string>.OkResponse(result.Value, "Delete seller account successful!", "200"));
         }
 
 
@@ -64,7 +64,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> ApproveSellerAccount(string id)
         {
             var sellerResponse = await sellerService.ApproveSellerAccount(id);
-            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Approve seller account successful!", "200"));
+            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse.Value, "Approve seller account successful!", "200"));
         }
 
         [Authorize]
@@ -73,7 +73,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> UpdateSellerAccount([FromBody] SellerUpdateRequest sellerUpdateRequest)
         {
             var sellerResponse = await sellerService.UpdateSellerAccount(sellerUpdateRequest);
-            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Update seller account successful!", "200"));
+            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse.Value, "Update seller account successful!", "200"));
         }
         [Authorize]
         [HttpGet("account/{accountId}")]
@@ -81,7 +81,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetSellerByAccountId(string accountId)
         {
             var sellerResponse = await sellerService.GetSellerByAccountId(accountId);
-            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse, "Get seller by account ID successful!", "200"));
+            return Ok(ApiResponse<SellerResponse>.OkResponse(sellerResponse.Value, "Get seller by account ID successful!", "200"));
         }
     }
 }

@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using MuseumSystem.Application.Dtos;
+﻿using Microsoft.AspNetCore.Mvc;
+using ShuppeMarket.Application.DTOs;
 using ShuppeMarket.Application.DTOs.ProductDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
-using ShuppeMarket.Domain.ResultError;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace ShuppeMarket.API.Controllers
@@ -27,10 +25,6 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetProductByIdAsync(string id)
         {
             var product = await _productService.GetProductByIdAsync(id);
-            if (product.IsFailure)
-            {
-                return NotFound(ApiResponse<ProductResponse>.NotFoundResponse("Product not found"));
-            }
             return Ok(ApiResponse<ProductResponse>.OkResponse(product.Value, "Get product successful!", "200"));
         }
 
@@ -42,7 +36,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetAllProductsAsync([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] string? orderBy = null, [FromQuery] string? fields = null)
         {
             var products = await _productService.GetAllProductsAsync(pageIndex, pageSize, searchTerm, orderBy, fields);
-            return Ok(ApiResponse<BasePaginatedList<object>>.OkResponse(products, "Get products successful!", "200"));
+            return Ok(ApiResponse<BasePaginatedList<object>>.OkResponse(products.Value, "Get products successful!", "200"));
         }
 
         [HttpPost]
@@ -53,7 +47,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> CreateProductAsync([FromForm] ProductRequest request)
         {
             var product = await _productService.CreateProductAsync(request);
-            return Ok(ApiResponse<ProductResponse>.OkResponse(product, "Create product successful!", "201"));
+            return Ok(ApiResponse<ProductResponse>.OkResponse(product.Value, "Create product successful!", "201"));
         }
 
         [HttpDelete("{id}")]
@@ -64,9 +58,9 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> DeleteProductAsync(string id)
         {
             var result = await _productService.DeleteProductAsync(id);
-            return Ok(ApiResponse<string>.OkResponse(result, "Delete product successful!", "200"));
+            return Ok(ApiResponse<string>.OkResponse(result.Value, "Delete product successful!", "200"));
         }
 
-        
+
     }
 }

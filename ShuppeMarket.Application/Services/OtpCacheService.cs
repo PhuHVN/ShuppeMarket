@@ -1,12 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using ShuppeMarket.Application.Interfaces;
 using StackExchange.Redis;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShuppeMarket.Application.Services
 {

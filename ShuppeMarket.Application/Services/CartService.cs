@@ -3,11 +3,7 @@ using ShuppeMarket.Application.DTOs.Cart;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ShuppeMarket.Domain.ResultError;
 
 namespace ShuppeMarket.Application.Services
 {
@@ -21,30 +17,30 @@ namespace ShuppeMarket.Application.Services
             _unitOfWork = unitOfWork;
             _authService = authService;
         }
-        public async Task AddToCartAsync(CartRequest request)
+        public async Task<Result<string>> AddToCartAsync(CartRequest request)
         {
             var user = await _authService.GetCurrentUserLoginAsync();
 
-            if (user == null)
+            if (user.IsFailure || user.Value == null)
             {
-                throw new Exception("User not authenticated");
+                return Result<string>.Fail("UNAUTHORIZED", "User not authenticated");
             }
 
             if (request.Products == null || !request.Products.Any())
             {
-                throw new Exception("Request must contain at least one product");
+                return Result<string>.Fail("INVALID_REQUEST", "No products provided to add to cart");
             }
 
             await _unitOfWork.BeginTransactionAsync();
             try
             {
                 // Get or create cart
-                var cart = await _unitOfWork.GetRepository<Cart>().FindAsync(x => x.AccountId == user.Id && x.IsActive);
+                var cart = await _unitOfWork.GetRepository<Cart>().FindAsync(x => x.AccountId == user.Value.Id && x.IsActive);
                 if (cart == null)
                 {
                     cart = new Cart
                     {
-                        AccountId = user.Id,
+                        AccountId = user.Value.Id,
                         IsActive = true,
                         CreateAt = DateTime.UtcNow
                     };
@@ -96,6 +92,7 @@ namespace ShuppeMarket.Application.Services
 
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
+                return Result<string>.Success("Products added to cart successfully");
             }
             catch (Exception ex)
             {
@@ -104,18 +101,18 @@ namespace ShuppeMarket.Application.Services
             }
         }
 
-        public async Task<CartResponse> GetCartAsyncByUserLogin()
+        public async Task<Result<CartResponse>> GetCartAsyncByUserLogin()
         {
             var user = await _authService.GetCurrentUserLoginAsync();
-            if (user == null)
+            if (user.IsFailure || user.Value == null)
             {
-                throw new Exception("User not authenticated");
+                return Result<CartResponse>.Fail("UNAUTHORIZED", "User not authenticated");
             }
             var cart = await _unitOfWork.GetRepository<Cart>()
-                .FindAsync(x => x.AccountId == user.Id && x.IsActive, include: x => x.Include(x => x.Account).Include(x => x.CartDetails).ThenInclude(cd => cd.Product).ThenInclude(x => x.Seller));
+                .FindAsync(x => x.AccountId == user.Value.Id && x.IsActive, include: x => x.Include(x => x.Account).Include(x => x.CartDetails).ThenInclude(cd => cd.Product).ThenInclude(x => x.Seller));
             if (cart == null)
             {
-                throw new Exception("Active cart not found for user");
+                return Result<CartResponse>.Fail("NOT_FOUND", "Active cart not found for user");
             }
             var cartDetails = cart.CartDetails.Select(cd => new CartDetailResponse
             {
@@ -129,43 +126,46 @@ namespace ShuppeMarket.Application.Services
                 Price = cd.Product.Price
             }).ToList();
 
-            return new CartResponse
+            var cartResponse = new CartResponse
             {
                 CartId = cart.Id,
                 CartDetails = cartDetails
             };
+            return Result<CartResponse>.Success(cartResponse);
         }
 
-        public async Task RemoveFromCartAsync(string detailId)
+        public async Task<Result<string>> RemoveFromCartAsync(string detailId)
         {
             var user = await _authService.GetCurrentUserLoginAsync();
-            if (user == null)
+            if (user.IsFailure || user.Value == null)
             {
-                throw new Exception("User not authenticated");
+                return Result<string>.Fail("UNAUTHORIZED", "User not authenticated");
             }
             var cartDetail = await _unitOfWork.GetRepository<CartDetail>().FindAsync(x => x.Id == detailId);
             if (cartDetail == null)
             {
-                throw new Exception("Cart detail not found");
+                return Result<string>.Fail("NOT_FOUND", "Cart detail not found");
             }
             await _unitOfWork.GetRepository<CartDetail>().DeleteAsync(cartDetail);
             await _unitOfWork.SaveChangesAsync();
+            return Result<string>.Success("Cart detail removed successfully");
         }
 
-        public async Task UpdateCartItemAsync(string detailId, int quantity)
+        public async Task<Result<string>> UpdateCartItemAsync(string detailId, int quantity)
         {
             var cartDetail = await _unitOfWork.GetRepository<CartDetail>().FindAsync(x => x.Id == detailId);
             if (cartDetail == null)
             {
-                throw new Exception("Cart detail not found");
+                return Result<string>.Fail("NOT_FOUND", "Cart detail not found");
             }
             if (quantity <= 0)
             {
-                throw new Exception("Quantity must be greater than zero");
+                return Result<string>.Fail("INVALID", "Quantity must be greater than zero");
             }
             cartDetail.Quantity = quantity;
             await _unitOfWork.GetRepository<CartDetail>().UpdateAsync(cartDetail);
             await _unitOfWork.SaveChangesAsync();
+            return Result<string>.Success("Cart detail updated successfully");
         }
     }
 }

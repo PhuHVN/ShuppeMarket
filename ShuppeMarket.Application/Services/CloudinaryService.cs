@@ -1,20 +1,13 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using ShuppeMarket.Application.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShuppeMarket.Application.Services
 {
     public class CloudinaryService : ICloudinaryService
     {
-        private readonly ICloudinary _cloudinary; 
+        private readonly ICloudinary _cloudinary;
 
         public CloudinaryService(ICloudinary cloudinary)
         {
@@ -44,7 +37,7 @@ namespace ShuppeMarket.Application.Services
 
             if (result == null || result.Error != null)
             {
-                throw new Exception(result?.Error?.Message ?? "Unknown error occurred during Cloudinary upload");
+                throw new ArgumentException("Error occurred during Cloudinary upload: " + (result?.Error?.Message ?? "Unknown error"));
             }
             return result.SecureUrl.ToString();
         }

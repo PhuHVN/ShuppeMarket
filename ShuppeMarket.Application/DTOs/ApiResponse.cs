@@ -1,12 +1,7 @@
-﻿using MuseumSystem.Domain.Enums.EnumConfig;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using ShuppeMarket.Domain.Enums.EnumConfig;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
-namespace MuseumSystem.Application.Dtos
+namespace ShuppeMarket.Application.DTOs
 {
     public class ApiResponse<T>
     {

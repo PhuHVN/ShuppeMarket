@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ShuppeMarket.Domain.ResultError
+﻿namespace ShuppeMarket.Domain.ResultError
 {
     public sealed class Result<T> : Result
     {
@@ -27,5 +21,7 @@ namespace ShuppeMarket.Domain.ResultError
 
         public static Result<T> Fail(Error error)
             => new(error);
+        public static Result<T> Fail(string code, string message)
+            => new(new Error(code, message));
     }
 }

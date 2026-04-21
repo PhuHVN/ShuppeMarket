@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ShuppeMarket.Application.DTOs.Cart
+﻿namespace ShuppeMarket.Application.DTOs.Cart
 {
     public class CartDetailResponse
     {
