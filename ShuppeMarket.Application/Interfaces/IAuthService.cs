@@ -1,23 +1,17 @@
-﻿
-using Microsoft.AspNetCore.Http;
-using ShuppeMarket.Application.DTOs.AccountDtos;
-using ShuppeMarket.Application.DTOs.LoginDtos;
+﻿using ShuppeMarket.Application.DTOs.AccountDtos;
+using ShuppeMarket.Application.DTOs.AuthDtos;
 using ShuppeMarket.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ShuppeMarket.Domain.ResultError;
 
 namespace ShuppeMarket.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthResponse> LoginAsync(DTOs.LoginDtos.LoginRequest request);
-        Task<AuthResponse> LoginGoogleAsync(LoginGoogleRequest request);
-        Task<string> RegisterAsync(AccountRequest request);
-        Task<AccountResponse> CurrentUser();
-        Task<string> VerifyOtp(string email,string otp);
-        Task<Account> GetCurrentUserLoginAsync();
+        Task<Result<AuthResponse>> LoginAsync(LoginRequest request);
+        Task<Result<AuthResponse>> LoginGoogleAsync(LoginGoogleRequest request);
+        Task<Result<string>> RegisterAsync(AccountRequest request);
+        Task<Result<AccountResponse>> CurrentUser();
+        Task<Result<string>> VerifyOtp(string email, string otp);
+        Task<Result<Account>> GetCurrentUserLoginAsync();
     }
 }

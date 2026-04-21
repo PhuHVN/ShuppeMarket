@@ -1,16 +1,12 @@
 ﻿using FluentValidation;
 using ShuppeMarket.Application.DTOs.ProductDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShuppeMarket.Application.Validation
 {
     public class ProductRequestValidation : AbstractValidator<ProductRequest>
     {
-        public ProductRequestValidation() {
+        public ProductRequestValidation()
+        {
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Product name is required.")
                 .MaximumLength(100).WithMessage("Product name must not exceed 100 characters.");

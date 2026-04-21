@@ -1,9 +1,9 @@
 ﻿
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MuseumSystem.Infrastructure.Seed;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Infrastructure.Implemention;
+using ShuppeMarket.Infrastructure.Seed;
 
 namespace ShuppeMarket.Infrastructure
 {

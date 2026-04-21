@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ShuppeMarket.Domain.ResultError
+﻿namespace ShuppeMarket.Domain.ResultError
 {
     public sealed class Error
     {
         public string Code { get; }
         public string Message { get; }
 
-        private Error(string code, string message)
+        public Error(string code, string message)
         {
             Code = code;
             Message = message;
@@ -19,15 +13,18 @@ namespace ShuppeMarket.Domain.ResultError
 
 
         public static readonly Error None =
-            new("None", string.Empty);
+            new("NONE", string.Empty);
 
         public static readonly Error NotFound =
-            new("NotFound", "Resource not found");
+            new("NOT_FOUND", "Resource not found");
 
         public static readonly Error Invalid =
-            new("Invalid", "Invalid request");
+            new("INVALID", "Invalid request");
 
         public static readonly Error Conflict =
-            new("Conflict", "Resource already exists");
+            new("CONFLICT", "Resource already exists");
+
+        public static readonly Error Unauthorized =
+            new("UNAUTHORIZED", "Unauthorized access");
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,6 @@ using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 using ShuppeMarket.Domain.Enums;
 using ShuppeMarket.Domain.ResultError;
-using System.Linq.Expressions;
 using System.Security.Claims;
 
 namespace ShuppeMarket.Application.Services
@@ -31,7 +31,7 @@ namespace ShuppeMarket.Application.Services
             this.mapper = mapper;
             _cloudinary = cloudinary;
         }
-        public async Task<ProductResponse> CreateProductAsync(ProductRequest request)
+        public async Task<Result<ProductResponse>> CreateProductAsync(ProductRequest request)
         {
             await _productRequestValidator.ValidateAndThrowAsync(request);
 
@@ -39,22 +39,22 @@ namespace ShuppeMarket.Application.Services
             if (userId == null)
             {
                 _logger.LogWarning("User ID not found in HTTP context.");
-                throw new UnauthorizedAccessException("User is not authenticated.");
+                return Result<ProductResponse>.Fail("UNAUTHORIZED", "User not authenticated.");
             }
             var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == userId && x.Account.Status == StatusEnum.Active && x.Account.Role == RoleEnum.Seller);
             if (seller == null)
             {
                 _logger.LogWarning("Only sellers can create products.");
-                throw new UnauthorizedAccessException("Only sellers can create products.");
+                return Result<ProductResponse>.Fail("FORBIDDEN", "Only sellers can create products.");
             }
             var ImgUrl = string.Empty;
-            if(request.Image != null)
+            if (request.Image != null)
             {
                 ImgUrl = await _cloudinary.UploadImageAsync(request.Image);
                 if (ImgUrl == null)
                 {
                     _logger.LogError("Image upload failed.");
-                    throw new Exception("Image upload failed.");
+                    return Result<ProductResponse>.Fail("IMAGE_UPLOAD_FAILED", "Failed to upload image.");
                 }
             }
 
@@ -89,30 +89,29 @@ namespace ShuppeMarket.Application.Services
             await _unitOfWork.GetRepository<Product>().InsertAsync(product);
             await _unitOfWork.SaveChangesAsync();
 
-            return mapper.Map<ProductResponse>(product);
+            return Result<ProductResponse>.Success(mapper.Map<ProductResponse>(product));
         }
-        public async Task<string> DeleteProductAsync(string productId)
+        public async Task<Result<string>> DeleteProductAsync(string productId)
         {
             var product = await _unitOfWork.GetRepository<Product>().GetByIdAsync(productId);
             if (product == null)
             {
                 _logger.LogWarning($"Product with ID {productId} not found.");
-                throw new KeyNotFoundException("Product not found.");
+                return Result<string>.Fail("NOT_FOUND", $"Product not found.");
             }
             product.Status = StatusEnum.Inactive;
             await _unitOfWork.GetRepository<Product>().UpdateAsync(product);
-            return "Delete successful !";
+            return Result<string>.Success("Product deleted successfully.");
 
         }
 
-        public async Task<BasePaginatedList<object>> GetAllProductsAsync(int pageIndex = 1,
+        public async Task<Result<BasePaginatedList<object>>> GetAllProductsAsync(int pageIndex = 1,
             int pageSize = 10,
             string? searchTerm = null,
             string? orderBy = null,
             string? fields = null)
         {
-            var query = _unitOfWork.GetRepository<Product>().Entity.Include(x => x.Seller).Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category).AsQueryable() ;
-            query = query.Where(x => x.Status == StatusEnum.Active);
+            var query = _unitOfWork.GetRepository<Product>().Entity.Where(x => x.Status == StatusEnum.Active);
 
             if (!string.IsNullOrEmpty(orderBy))
             {
@@ -120,22 +119,23 @@ namespace ShuppeMarket.Application.Services
             }
             var map = mapper.ConfigurationProvider;
             var fieldsToSearch = new[] { "Name", "Description" };
+            var dtos = _unitOfWork.GetRepository<Product>().Entity.ProjectTo<ProductResponse>(map).AsQueryable();
             var result = await _unitOfWork.GetRepository<Product>().GetAllWithPaggingSortSelectionFieldAsync<Product, ProductResponse>(query, map, searchTerm, fieldsToSearch, orderBy, fields, pageIndex, pageSize);
-            return result;
+            return Result<BasePaginatedList<object>>.Success(result);
         }
-        
+
         public async Task<Result<ProductResponse>> GetProductByIdAsync(string productId)
         {
-            var product = await _unitOfWork.GetRepository<Product>().FindAsync(x => x.Id == productId , x => x.Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category));
-            if(product == null)
+            var product = await _unitOfWork.GetRepository<Product>().FindAsync(x => x.Id == productId, x => x.Include(x => x.Seller.Account).Include(x => x.CategoryProducts).ThenInclude(x => x.Category));
+            if (product == null)
             {
-               return Result<ProductResponse>.Fail(Error.NotFound);
+                return Result<ProductResponse>.Fail(Error.NotFound);
             }
             var mappedProduct = mapper.Map<ProductResponse>(product);
             return Result<ProductResponse>.Success(mappedProduct);
         }
 
-        public Task<ProductResponse> UpdateProductAsync(string id, ProductUpdateRequest request)
+        public Task<Result<ProductResponse>> UpdateProductAsync(string id, ProductUpdateRequest request)
         {
             throw new NotImplementedException();
         }

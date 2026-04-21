@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 
-namespace MuseumSystem.Domain.Enums.EnumConfig
+namespace ShuppeMarket.Domain.Enums.EnumConfig
 {
     public static class EnumHelper
     {
@@ -31,5 +26,5 @@ namespace MuseumSystem.Domain.Enums.EnumConfig
             var attribute = field?.GetCustomAttribute<CustomId>();
             return attribute?.Type ?? string.Empty;
         }
-    }   
+    }
 }

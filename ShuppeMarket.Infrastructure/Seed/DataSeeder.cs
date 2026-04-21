@@ -1,15 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using ShuppeMarket.Domain.Entities;
 using ShuppeMarket.Domain.Enums;
 using ShuppeMarket.Infrastructure.DatabaseSettings;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MuseumSystem.Infrastructure.Seed
+namespace ShuppeMarket.Infrastructure.Seed
 {
     public class DataSeeder
     {

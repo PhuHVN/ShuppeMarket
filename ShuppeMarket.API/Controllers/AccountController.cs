@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MuseumSystem.Application.Dtos;
+using ShuppeMarket.Application.DTOs;
 using ShuppeMarket.Application.DTOs.AccountDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
@@ -10,7 +9,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace ShuppeMarket.API.Controllers
 {
-    
+
     [Route("api/v1/accounts")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -21,13 +20,13 @@ namespace ShuppeMarket.API.Controllers
             _accountService = accountService;
         }
 
-        [Authorize(Roles = Roles.Customer )]
+        [Authorize(Roles = Roles.Customer)]
         [HttpPost]
         [SwaggerOperation(Summary = "Create a new account", Description = "Creates a new account with the provided details.")]
         public async Task<IActionResult> CreateAccount([FromBody] AccountRequest request)
         {
             var account = await _accountService.CreateAccount(request);
-            return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Account created successfully", "201"));
+            return Ok(ApiResponse<AccountResponse>.OkResponse(account.Value, "Account created successfully", "201"));
         }
 
         [Authorize]
@@ -36,7 +35,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetAccountById(string id)
         {
             var account = await _accountService.GetAccountById(id);
-            return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Account retrieved successfully", "200"));
+            return Ok(ApiResponse<AccountResponse>.OkResponse(account.Value, "Account retrieved successfully", "200"));
         }
 
         [Authorize(Roles = Roles.Admin)]
@@ -45,7 +44,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> GetAllAccounts(int pageIndex = 1, int pageSize = 10)
         {
             var accounts = await _accountService.GetAllAccounts(pageIndex, pageSize);
-            return Ok(ApiResponse<BasePaginatedList<AccountResponse>>.OkResponse(accounts, "Accounts retrieved successfully", "200"));
+            return Ok(ApiResponse<BasePaginatedList<AccountResponse>>.OkResponse(accounts.Value, "Accounts retrieved successfully", "200"));
         }
 
         [Authorize]
@@ -54,7 +53,7 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> UpdateAccount([FromBody] AccountUpdateRequest request)
         {
             var account = await _accountService.UpdateAccount(request);
-            return Ok(ApiResponse<AccountResponse>.OkResponse(account, "Account updated successfully", "200"));
+            return Ok(ApiResponse<AccountResponse>.OkResponse(account.Value, "Account updated successfully", "200"));
         }
 
         [Authorize(Roles = Roles.Admin)]
@@ -63,9 +62,9 @@ namespace ShuppeMarket.API.Controllers
         public async Task<IActionResult> DeleteAccount(string id)
         {
             await _accountService.DeleteAccount(id);
-            return Ok(ApiResponse<string>.OkResponse(null, "Account deleted successfully", "200"));
+            return NoContent();
         }
 
-        
+
     }
 }

@@ -1,10 +1,8 @@
 ﻿using CloudinaryDotNet;
 using FluentValidation;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Application.Services;
-using StackExchange.Redis;
 
 namespace ShuppeMarket.Application
 {
@@ -20,7 +18,7 @@ namespace ShuppeMarket.Application
             services.AddScoped<IOtpCacheService, OtpCacheService>();
             services.AddScoped<ISellerService, SellerService>();
             services.AddScoped<ICloudinary, Cloudinary>();
-            services.AddScoped<ICloudinaryService, CloudinaryService>();      
+            services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IReviewService, ReviewService>();

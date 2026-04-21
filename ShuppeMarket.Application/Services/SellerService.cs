@@ -8,12 +8,8 @@ using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
 using ShuppeMarket.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using ShuppeMarket.Domain.ResultError;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace ShuppeMarket.Application.Services
@@ -36,7 +32,7 @@ namespace ShuppeMarket.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<SellerResponse> RegisterSellerAccount(string accountId, SellerRequest sellerRequest)
+        public async Task<Result<SellerResponse>> RegisterSellerAccount(string accountId, SellerRequest sellerRequest)
         {
             await _validator.ValidateAndThrowAsync(sellerRequest);
 
@@ -46,22 +42,22 @@ namespace ShuppeMarket.Application.Services
                 var user = await _unitOfWork.GetRepository<Account>().GetByIdAsync(accountId);
                 if (user == null)
                 {
-                    throw new KeyNotFoundException($"Account with ID {accountId} not found.");
+                    return Result<SellerResponse>.Fail("NOT_FOUND", $"Account not found.");
                 }
                 if (user.Role == RoleEnum.Seller)
                 {
-                    throw new InvalidOperationException("Account is already registered as a seller.");
+                    return Result<SellerResponse>.Fail("ALREADY_EXISTS", "Account is already registered as a seller.");
                 }
                 var existingSeller = await _unitOfWork.GetRepository<Seller>()
                     .FindAsync(s => s.AccountId == accountId);
                 if (existingSeller != null)
                 {
-                    throw new InvalidOperationException("Seller account already exists for this user.");
+                    return Result<SellerResponse>.Fail("ALREADY_EXISTS", "Seller account already exists for this user.");
                 }
 
                 //update account
 
-                var isUpdate = false;               
+                var isUpdate = false;
                 if (!string.IsNullOrEmpty(sellerRequest.Address) && user.Address != sellerRequest.Address)
                 {
                     user.Address = sellerRequest.Address;
@@ -88,7 +84,7 @@ namespace ShuppeMarket.Application.Services
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
                 _logger.LogInformation("Seller account registered successfully for AccountId: {AccountId}", accountId);
-                return _mapper.Map<SellerResponse>(newSeller);
+                return Result<SellerResponse>.Success(_mapper.Map<SellerResponse>(newSeller));
 
             }
             catch (Exception ex)
@@ -99,90 +95,90 @@ namespace ShuppeMarket.Application.Services
             }
         }
 
-        public async Task<SellerResponse> GetSellerById(string id)
+        public async Task<Result<SellerResponse>> GetSellerById(string id)
         {
             var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.Id == id, x => x.Include(x => x.Account));
             if (seller == null)
             {
-                throw new KeyNotFoundException($"Seller with ID {id} not found.");
+                return Result<SellerResponse>.Fail("NOT_FOUND", $"Seller not found.");
             }
-            return _mapper.Map<SellerResponse>(seller);
+            return Result<SellerResponse>.Success(_mapper.Map<SellerResponse>(seller));
         }
 
-        public async Task<BasePaginatedList<SellerResponse>> GetAllSellers(int pageIndex, int pageSize)
+        public async Task<Result<BasePaginatedList<SellerResponse>>> GetAllSellers(int pageIndex, int pageSize)
         {
             var sellersQuery = _unitOfWork.GetRepository<Seller>().Entity;
             sellersQuery = sellersQuery.Include(s => s.Account);
             var rs = await _unitOfWork.GetRepository<Seller>().GetPagging(sellersQuery, pageIndex, pageSize);
-            return _mapper.Map<BasePaginatedList<SellerResponse>>(rs);
+            return Result<BasePaginatedList<SellerResponse>>.Success(_mapper.Map<BasePaginatedList<SellerResponse>>(rs));
 
         }
 
-        public async Task<SellerResponse> ApproveSellerAccount(string sellerId)
+        public async Task<Result<SellerResponse>> ApproveSellerAccount(string sellerId)
         {
             var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.Id == sellerId, q => q.Include(x => x.Account));
             if (seller == null)
             {
-                throw new KeyNotFoundException($"Seller with ID {sellerId} not found.");
+                return Result<SellerResponse>.Fail("NOT_FOUND", $"Seller not found.");
             }
             var account = await _unitOfWork.GetRepository<Account>().GetByIdAsync(seller.AccountId);
             if (account == null)
             {
-                throw new KeyNotFoundException($"Account with ID {seller.AccountId} not found.");
+                return Result<SellerResponse>.Fail("NOT_FOUND", $"Account not found.");
             }
             account.Status = StatusEnum.Active;
             account.Role = RoleEnum.Seller;
             account.LastUpdatedAt = DateTime.UtcNow;
             await _unitOfWork.GetRepository<Account>().UpdateAsync(account);
             await _unitOfWork.SaveChangesAsync();
-            return _mapper.Map<SellerResponse>(seller);
+            return Result<SellerResponse>.Success(_mapper.Map<SellerResponse>(seller));
         }
 
-        public async Task<string> DeleteSellerAccount(string id)
+        public async Task<Result<string>> DeleteSellerAccount(string id)
         {
             var seller = await _unitOfWork.GetRepository<Seller>().GetByIdAsync(id);
             if (seller == null)
             {
-                throw new KeyNotFoundException($"Seller with ID {id} not found.");
+                return Result<string>.Fail("NOT_FOUND", $"Seller not found.");
             }
             var account = await _unitOfWork.GetRepository<Account>().GetByIdAsync(seller.AccountId);
             if (account == null)
             {
-                throw new KeyNotFoundException($"Account with ID {seller.AccountId} not found.");
+                return Result<string>.Fail("NOT_FOUND", $"Account not found.");
             }
             account.Status = StatusEnum.Inactive;
             await _unitOfWork.GetRepository<Account>().UpdateAsync(account);
             await _unitOfWork.SaveChangesAsync();
-            return "Seller account deleted successfully.";
+            return Result<string>.Success("Seller account deleted successfully.");
         }
 
-        public async Task<SellerResponse> GetSellerByAccountId(string accountId)
+        public async Task<Result<SellerResponse>> GetSellerByAccountId(string accountId)
         {
             var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == accountId, q => q.Include(x => x.Account));
             if (seller == null)
             {
-                throw new KeyNotFoundException($"Seller with Account ID {accountId} not found.");
+                return Result<SellerResponse>.Fail("NOT_FOUND", $"Seller not found.");
             }
-            return _mapper.Map<SellerResponse>(seller);
+            return Result<SellerResponse>.Success(_mapper.Map<SellerResponse>(seller));
         }
-        public async Task<SellerResponse> UpdateSellerAccount(SellerUpdateRequest sellerUpdateRequest)
+        public async Task<Result<SellerResponse>> UpdateSellerAccount(SellerUpdateRequest sellerUpdateRequest)
         {
             await _validatorUpdate.ValidateAndThrowAsync(sellerUpdateRequest);
             // 
             var accountId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(accountId))
             {
-                throw new Exception("Unauthorized to update this account.");
+                return Result<SellerResponse>.Fail("UNAUTHORIZED", "Unauthorized to update this account.");
             }
 
             var seller = await _unitOfWork.GetRepository<Seller>().FindAsync(x => x.AccountId == accountId, q => q.Include(x => x.Account));
             if (seller == null)
             {
-                throw new KeyNotFoundException("Seller with ID {id} not found.");
+                return Result<SellerResponse>.Fail("NOT_FOUND", $"Seller not found.");
             }
-            if(seller.Account.Status == StatusEnum.Inactive)
+            if (seller.Account.Status == StatusEnum.Inactive)
             {
-                throw new InvalidOperationException("Cannot update an inactive seller account.");
+                return Result<SellerResponse>.Fail("INACTIVE", "Seller account is inactive.");
             }
             var isUpdate = false;
             if (!string.IsNullOrEmpty(sellerUpdateRequest.ShopName) && sellerUpdateRequest.ShopName != seller.ShopName)
@@ -217,7 +213,7 @@ namespace ShuppeMarket.Application.Services
                     throw;
                 }
             }
-            return _mapper.Map<SellerResponse>(seller);
+            return Result<SellerResponse>.Success(_mapper.Map<SellerResponse>(seller));
         }
     }
 }

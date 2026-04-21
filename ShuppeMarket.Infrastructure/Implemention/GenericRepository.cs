@@ -114,8 +114,8 @@ namespace ShuppeMarket.Infrastructure.Implemention
             int pageIndex = 1,
             int pageSize = 10)
         {
-            
-           
+
+
 
             // 1. Validation Fields dựa trên TResponse
             // Nói cách khác , chỉ những field nào tồn tại trong TResponse mới được phép chọn và sắp xếp
@@ -132,8 +132,8 @@ namespace ShuppeMarket.Infrastructure.Implemention
             // Tại sao lại cấn projectTo này --> Nếu không có ProjectTo, thì query sẽ trả về TEntity, sau đó mới chọn field động trên TEntity. Điều này sẽ gây ra lỗi nếu có field nào đó tồn tại trong TEntity nhưng không tồn tại trong TResponse.
             var dtoQuery = query.ProjectTo<TResponse>(mapperConfig);
 
-            if(!string.IsNullOrEmpty(searchTerm) && searchFields != null && searchFields.Any())
-    {
+            if (!string.IsNullOrEmpty(searchTerm) && searchFields != null && searchFields.Any())
+            {
                 // Chỉ tạo filter dựa trên danh sách searchFields bạn đưa vào
                 var filterExpression = string.Join(" || ", searchFields.Select(f => $"{f}.ToLower().Contains(@0)"));
                 dtoQuery = dtoQuery.Where(filterExpression, searchTerm.ToLower());

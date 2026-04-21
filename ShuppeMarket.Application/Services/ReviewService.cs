@@ -5,11 +5,7 @@ using ShuppeMarket.Application.DTOs.ReviewDtos;
 using ShuppeMarket.Application.Interfaces;
 using ShuppeMarket.Domain.Abstractions;
 using ShuppeMarket.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ShuppeMarket.Domain.ResultError;
 
 namespace ShuppeMarket.Application.Services
 {
@@ -29,12 +25,12 @@ namespace ShuppeMarket.Application.Services
             this.auth = auth;
         }
 
-        public async Task<ReviewResponse> CreateReview(string productId, ReviewRequest request)
+        public async Task<Result<ReviewResponse>> CreateReview(string productId, ReviewRequest request)
         {
-            var user = await auth.GetCurrentUserLoginAsync();
-            if (user == null)
+            var userResult = await auth.GetCurrentUserLoginAsync();
+            if (!userResult.IsSuccess || userResult.Value == null)
             {
-                throw new Exception("User not found");
+                return Result<ReviewResponse>.Fail("UNAUTHORIZED", "User not found");
             }
             var product = await _unitOfWork.GetRepository<Product>().FindAsync(x => x.Id == productId);
             if (product == null)
@@ -44,29 +40,30 @@ namespace ShuppeMarket.Application.Services
             var review = new Review
             {
                 ProductId = product.Id,
-                AccountId = user.Id,
+                AccountId = userResult.Value.Id,
                 Rating = request.Rating,
                 Comment = request.Comment,
                 CreateAt = DateTime.UtcNow
             };
             await _unitOfWork.GetRepository<Review>().InsertAsync(review);
             await _unitOfWork.SaveChangesAsync();
-            return _mapper.Map<ReviewResponse>(review);
+            return Result<ReviewResponse>.Success(_mapper.Map<ReviewResponse>(review));
 
         }
 
-        public async Task<string> DeleteReview(string id)
+        public async Task<Result<string>> DeleteReview(string id)
         {
             var review = await _unitOfWork.GetRepository<Review>().FindAsync(x => x.Id == id);
             if (review == null)
             {
-                throw new Exception("Review not found");
+                return Result<string>.Fail("NOT_FOUND", "Review not found");
             }
             await _unitOfWork.GetRepository<Review>().DeleteAsync(review);
-            return "Delete successfully";
+            await _unitOfWork.SaveChangesAsync();
+            return Result<string>.Success("Review deleted successfully");
         }
 
-        public async Task<BasePaginatedList<object>> GetAllReviews(int pageIndex = 1, int pageSize = 10, string? searchTerm = null, string? orderBy = null, string? fields = null)
+        public async Task<Result<BasePaginatedList<object>>> GetAllReviews(int pageIndex = 1, int pageSize = 10, string? searchTerm = null, string? orderBy = null, string? fields = null)
         {
             var query = _unitOfWork.GetRepository<Review>().Entity.Include(x => x.Account).Include(x => x.Product).AsQueryable();
             if (!string.IsNullOrEmpty(orderBy))
@@ -76,9 +73,9 @@ namespace ShuppeMarket.Application.Services
             var mapp = _mapper.ConfigurationProvider;
             var fieldsToSearch = new[] { "Comment" };
             var result = await _unitOfWork.GetRepository<Review>().GetAllWithPaggingSortSelectionFieldAsync<Review, ReviewResponse>(query, mapp, searchTerm, fieldsToSearch, orderBy, fields, pageIndex, pageSize);
-            return result;
+            return Result<BasePaginatedList<object>>.Success(result);
         }
-        public async Task<BasePaginatedList<object>> GetAllReviewsByProductId(string productId, int pageIndex = 1, int pageSize = 10, string? searchTerm = null, string? orderBy = null, string? fields = null)
+        public async Task<Result<BasePaginatedList<object>>> GetAllReviewsByProductId(string productId, int pageIndex = 1, int pageSize = 10, string? searchTerm = null, string? orderBy = null, string? fields = null)
         {
             var query = _unitOfWork.GetRepository<Review>().Entity.Include(x => x.Account).Include(x => x.Product).Where(x => x.ProductId == productId).AsQueryable();
             if (!string.IsNullOrEmpty(orderBy))
@@ -88,20 +85,20 @@ namespace ShuppeMarket.Application.Services
             var mapp = _mapper.ConfigurationProvider;
             var fieldsToSearch = new[] { "Comment" };
             var result = await _unitOfWork.GetRepository<Review>().GetAllWithPaggingSortSelectionFieldAsync<Review, ReviewResponse>(query, mapp, searchTerm, fieldsToSearch, orderBy, fields, pageIndex, pageSize);
-            return result;
+            return Result<BasePaginatedList<object>>.Success(result);
         }
 
-        public async Task<ReviewResponse> GetReviewById(string id)
+        public async Task<Result<ReviewResponse>> GetReviewById(string id)
         {
             var review = await _unitOfWork.GetRepository<Review>().FindAsync(x => x.Id == id, include: x => x.Include(x => x.Account).Include(x => x.Product));
             if (review == null)
             {
-                throw new Exception("Review not found");
+                return Result<ReviewResponse>.Fail("NOT_FOUND", "Review not found");
             }
-            return _mapper.Map<ReviewResponse>(review);
+            return Result<ReviewResponse>.Success(_mapper.Map<ReviewResponse>(review));
         }
 
-        public async Task<double> OverallStarsByProductId(string productId)
+        public async Task<Result<double>> OverallStarsByProductId(string productId)
         {
             var reviews = await _unitOfWork.GetRepository<Review>().Entity
                 .Where(x => x.ProductId == productId)
@@ -109,14 +106,14 @@ namespace ShuppeMarket.Application.Services
 
             if (reviews == null || reviews.Count == 0)
             {
-                return 0;
+                return Result<double>.Success(0);
             }
 
             var averageStars = reviews.Average(x => x.Rating);
-            return averageStars;
+            return Result<double>.Success(averageStars);
         }
 
-        public Task<ReviewResponse> UpdateReview(string id, ReviewRequest request)
+        public Task<Result<ReviewResponse>> UpdateReview(string id, ReviewRequest request)
         {
             throw new NotImplementedException();
         }

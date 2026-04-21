@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace MuseumSystem.Application.Validation
+namespace ShuppeMarket.Application.Validation
 {
     public class ValidationFilter : IAsyncActionFilter
     {
