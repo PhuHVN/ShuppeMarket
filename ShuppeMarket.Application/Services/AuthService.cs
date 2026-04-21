@@ -187,11 +187,11 @@ namespace ShuppeMarket.Application.Services
                 return Result<string>.Fail("INVALID", "Email and OTP must be provided.");
             }
             var cachedOtp = await _otpCacheService.RetrieveOtpAsync(email);
-            if (!cachedOtp.IsSuccess)
+            if (cachedOtp == null)
             {
                 return Result<string>.Fail("INVALID", "Invalid or expired OTP.");
             }
-            if (cachedOtp.Value != otp)
+            if (cachedOtp != otp)
             {
                 return Result<string>.Fail("INVALID", "Invalid OTP.");
             }
